@@ -104,7 +104,10 @@ Lemma PIT_list_not_nil_ForwardInterest :
   CCNprotocol es ps ->
    PIT_list v c es <> nil ->
    In (ForwardInterest v c) es.
-Admitted.
+intros v c es ps H; revert v c; induction H; intros; simpl in *; auto;
+ destruct (Node_eq_dec v0 v'); auto;
+  destruct (Content_Name_eq_dec c0 c); subst; auto.
+Qed.
 
 
 End CCN_Protocol_Lemma.
