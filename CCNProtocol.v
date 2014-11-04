@@ -130,7 +130,7 @@ Inductive CCNprotocol : list Event -> list Packet -> Prop :=
     In v (PIT_list v' c es) ->
     ps' = ps1 ++ ps2 ->
     CCNprotocol es ps'
-| ccn_rpsly_data : forall (v v' : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps1 ps2 ps' : list Packet),
+| ccn_reply_data : forall (v v' : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps1 ps2 ps' : list Packet),
    CCNprotocol es (ps1 ++ Interest v v' c :: ps2) ->
     Content_get v' c es = Some C ->
     ps' = Data v' v c C :: ps1 ++ ps2 ->
