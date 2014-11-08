@@ -25,6 +25,18 @@ Lemma CCN_Forward' :
        (exists C : Content c, In (StoreData v c C) (es' ++ ForwardInterest v c :: es))
        \/ (exists (C : Content c) (es'' : list Event) (ps'' : list Packet),
              CCNprotocol (StoreData v c C :: es'' ++ es' ++ ForwardInterest v c :: es) ps'').
+intros v c es ps H; revert es ps; induction H; intros.
+ elim (InitCS_Content_get _ _ _ _ H0 H).
+  eapply ForwardInterest_Not_Content_get; eauto.
+ case_eq (Content_get v1 c (es' ++ ForwardInterest v1 c :: es)); intros.
+  left; destruct (Content_get_InitCS_or_StoreData _ _ _ _ _ H2 H3).
+   elim (InitCS_Content_get _ _ _ _ H1 H4).
+    eapply ForwardInterest_Not_Content_get; eauto.
+   exists c0; auto.
+  right; destruct in_dec_forward with v2 c (es' ++ ForwardInterest v1 c :: es).
+(*
+ v2のForwardInterestの有無、
+*)
 Admitted.
 
 

@@ -160,7 +160,7 @@ Inductive CCNprotocol : list Event -> list Packet -> Prop :=
     ps' = ps1 ++ ps2 ->
     CCNprotocol es ps'.
 (* 基本Dataパケットをdropすることはない。例外はInterestパケットをCSを持ってる相手に二回以上連続で送った場合。 *)
-
+(* Forwardは二回以上しないが、RequestとForwardは組み合わせられるし、Requestは何回でもできる。どうなんだろう。 *)
 
 
 (* In で使うからEventのdecision procedureを作ること *)
