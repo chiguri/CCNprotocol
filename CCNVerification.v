@@ -25,17 +25,30 @@ Lemma CCN_Forward' :
        (exists C : Content c, In (StoreData v c C) (es' ++ ForwardInterest v c :: es))
        \/ (exists (C : Content c) (es'' : list Event) (ps'' : list Packet),
              CCNprotocol (StoreData v c C :: es'' ++ es' ++ ForwardInterest v c :: es) ps'').
+Proof with eauto.
 intros v c es ps H; revert es ps; induction H; intros.
  elim (InitCS_Content_get _ _ _ _ H0 H).
-  eapply ForwardInterest_Not_Content_get; eauto.
+  eapply ForwardInterest_Not_Content_get...
  case_eq (Content_get v1 c (es' ++ ForwardInterest v1 c :: es)); intros.
   left; destruct (Content_get_InitCS_or_StoreData _ _ _ _ _ H2 H3).
    elim (InitCS_Content_get _ _ _ _ H1 H4).
-    eapply ForwardInterest_Not_Content_get; eauto.
+    eapply ForwardInterest_Not_Content_get...
    exists c0; auto.
   right; destruct in_dec_forward with v2 c (es' ++ ForwardInterest v1 c :: es).
+   admit.
+  case_eq (Content_get v2 c (es' ++ ForwardInterest v1 c :: es)); intros.
+   (* Interest Packetが残っているか、既にデータを返しているはず *)
+    
 (*
- v2のForwardInterestの有無、
+ v2のForwardInterestがある場合は、ForwardInterestより後ろにStoreDataがあり、PITは空ではないはずである。
+  よってDataが送られる。パケットの保持に関する定理が必要か。StoreDataがまだないなら、なにかのイベント列がある。
+  ここからDataが送られているはず。（PITは空ではないので）
+ v2のForwardInterestがない場合は、ForwardInterestで投げたInterestパケットが保持されているはず（要補題）。
+  あとはコンテンツが既にあるかが問題であり、なければForwardInterestが発行されて以下略。
+  コンテンツが既にあるならReplyDataが発行されてパケットが来るのでコンストラクタ適用しておしまい。
+
+なお、ある時点でContent_getがNone、それ以降のある時点でContent_getがSomeを返すなら、その間に存在する、という
+補題が必要そう。
 *)
 Admitted.
 

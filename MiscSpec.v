@@ -36,3 +36,17 @@ exists n; auto.
 Qed.
 
 End Sum_eq.
+
+
+
+Section List.
+
+Require Import List.
+Lemma in_change : forall (A : Type) (a1 a2 : A) (as1 as2 : list A),
+ In a1 (as1 ++ a2 :: as2) -> a1 = a2 \/ In a1 (as1 ++ as2).
+intros.
+ apply in_app_or in H.
+  simpl in H; intuition.
+Qed.
+
+End List.

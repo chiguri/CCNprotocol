@@ -22,7 +22,7 @@ Export Protocol.
 (*
 The following lemma requires "Content is distinctive" (absolutely true),
 but in CCNTopology, we do not define such specification.
-Fortunately, we do not need "full" distinctiveness, but only "request is in list or not".
+Fortunately, we do not need "full" distinctiveness, but only "request/forward is in list or not".
 So we prove just it.
 
 Lemma event_eq_dec : forall e1 e2 : Event, { e1 = e2 } + { e1 <> e2 }.
@@ -250,21 +250,130 @@ Qed.
 
 
 
+Lemma Connected_In_Broadcast_Interest :
+ forall (v1 v2 : Node) (c : Content_Name),
+  Connected v1 v2 ->
+   In (Interest v1 v2 c) (Broadcast_Interest v1 c).
+intros v1 v2 c; unfold Connected; unfold Broadcast_Interest; generalize (Connected_list v1);
+    revert v1 v2 c; induction l; intros; simpl in H.
+ elim H.
+ destruct H; subst; simpl; eauto.
+Qed.
+
+
+
+Lemma FIB_In_FIB_Interest :
+ forall (v1 v2 : Node) (c : Content_Name),
+  FIB v1 c v2 ->
+   In (Interest v1 v2 c) (FIB_Interest v1 c).
+intros v1 v2 c; unfold FIB; unfold FIB_Interest; generalize (FIB_list v1 c);
+    revert v1 v2 c; induction l; intros; simpl in H.
+ elim H.
+ destruct H; subst; simpl; eauto.
+Qed.
+
+
+
+Lemma In_PIT_list_In_AddPIT :
+ forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
+  CCNprotocol es ps ->
+   Content_get v2 c es = None ->
+   In v1 (PIT_list v2 c es) ->
+   In (AddPIT v2 v1 c) es.
+Proof with eauto.
+intros; induction H; simpl in *...
+ destruct Node_eq_dec with v2 v'...
+  destruct Content_Name_eq_dec with c c0...
+   simpl in H1; destruct H1; subst...
+ destruct Node_eq_dec with v2 v'...
+  destruct Content_Name_eq_dec with c c0...
+   simpl in H1; destruct H1; subst...
+ destruct Node_eq_dec with v2 v'...
+  destruct Content_Name_eq_dec with c c0...
+   subst; cbv in H0; discriminate.
+ destruct Node_eq_dec with v2 v'...
+  destruct Content_Name_eq_dec with c c0...
+   subst; cbv in H0; discriminate.
+ destruct Node_eq_dec with v2 v'...
+  destruct Content_Name_eq_dec with c c0...
+   subst; cbv in H0; discriminate.
+Qed.
+
 
 
 Lemma Not_Content_get_PIT_or_Interest :
- forall (v : Node) (c : Content_Name) (es1 es2 : list Event) (ps : list Packet),
-  CCNprotocol (es1 ++ ForwardInterest v c :: es2) ps ->
-   FIBreachable v c ->
-   exists v' : Node,
-    Content_get v' c (es1 ++ ForwardInterest v c :: es2) = None ->
-     In (AddPIT v' v c) es1 \/ In (Interest v v' c) ps.
+ forall (v1 v2 : Node) (c : Content_Name) (es1 es2 : list Event) (ps : list Packet),
+  CCNprotocol (es1 ++ ForwardInterest v1 c :: es2) ps ->
+   FIB v1 c v2 ->
+   FIBreachable v2 c ->
+   Content_get v2 c (es1 ++ ForwardInterest v1 c :: es2) = None ->
+    In (AddPIT v2 v1 c) (es1 ++ ForwardInterest v1 c :: es2) \/ In (Interest v1 v2 c) ps.
 Proof with eauto.
-intros v c es1 es2 ps H; remember (es1 ++ ForwardInterest v c :: es2); revert v c es1 es2 Heql; induction H; intros; subst.
+intros v1 v2 c es1 es2 ps H; remember (es1 ++ ForwardInterest v1 c :: es2);
+   revert es1 es2 Heql; induction H; intros; subst; simpl in *.
  symmetry in Heql.
-  destruct (app_eq_nil _ _ Heql) as [_ H0]; inversion H0.
- destruct es1; simpl in Heql; inversion Heql.
-Admitted.
+  destruct (app_eq_nil _ _ Heql) as [_ H2]; inversion H2.
+ destruct es1; simpl in Heql; inversion Heql; subst; simpl.
+  destruct IHCCNprotocol with es1 es2...
+   right; apply in_or_app; auto.
+ destruct es1; simpl in Heql; inversion Heql; simpl.
+  right; apply in_or_app; left.
+   apply FIB_In_FIB_Interest; auto.
+  subst; destruct es1; inversion Heql; subst.
+   simpl; destruct IHCCNprotocol with es1 es2...
+    apply in_change in H3; destruct H3...
+     inversion H3; subst...
+     right; apply in_or_app...
+ destruct es1; simpl in Heql; inversion Heql; subst; simpl.
+  destruct IHCCNprotocol with es1 es2...
+   apply in_change in H4; destruct H4...
+    inversion H4; subst; auto.
+ destruct IHCCNprotocol with es1 es2...
+  apply in_change in H2; destruct H2...
+   inversion H2; subst.
+    destruct H4.
+     elim (InitCS_Content_get _ _ _ _ H H4)...
+     unfold FIB in H4; rewrite H1 in H4; simpl in H4; elim H4.
+ destruct IHCCNprotocol with es1 es2...
+  apply in_change in H2; destruct H2...
+   inversion H2; subst.
+    left; eapply In_PIT_list_In_AddPIT...
+ destruct es1; simpl in Heql; inversion Heql; subst; simpl.
+  destruct IHCCNprotocol with es1 es2...
+   apply in_change in H1; destruct H1...
+    inversion H1; subst.
+     rewrite H4 in H0; discriminate.
+ destruct es1; simpl in Heql; inversion Heql; subst.
+  destruct IHCCNprotocol with es1 es2...
+   destruct Node_eq_dec with v2 v'...
+    destruct Content_Name_eq_dec with c c0...
+     subst; cbv in H5; discriminate.
+   apply in_change in H2; destruct H2...
+    inversion H2.
+ destruct es1; simpl in Heql; inversion Heql; subst.
+  destruct es1; simpl in Heql; inversion Heql; subst.
+   destruct IHCCNprotocol with es1 es2...
+    destruct Node_eq_dec with v2 v'...
+     destruct Content_Name_eq_dec with c c0...
+     subst; cbv in H5; discriminate.
+   apply in_change in H2; destruct H2.
+    inversion H2.
+    right.
+     apply in_or_app; auto.
+ destruct es1; simpl in Heql; inversion Heql; subst.
+  destruct es1; simpl in Heql; inversion Heql; subst.
+   destruct IHCCNprotocol with es1 es2...
+    destruct Node_eq_dec with v2 v'...
+     destruct Content_Name_eq_dec with c c0...
+     subst; cbv in H5; discriminate.
+   apply in_change in H2; destruct H2.
+    inversion H2.
+    right.
+     apply in_or_app; auto.
+ destruct IHCCNprotocol with es1 es2...
+  apply in_change in H2; destruct H2...
+   inversion H2.
+Qed.
 
 
 
