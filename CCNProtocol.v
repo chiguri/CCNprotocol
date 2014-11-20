@@ -137,26 +137,28 @@ Inductive CCNprotocol : list Event -> list Packet -> Prop :=
     CCNprotocol (ReplyData v' c :: es) ps'
 | ccn_store_data : forall (v v' : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps1 ps2 ps' : list Packet),
    CCNprotocol es (ps1 ++ Data v v' c C :: ps2) ->
+    Content_get v' c es = None ->
     In (Request v' c) es ->
     PIT_list v' c es = nil ->
     ps' = ps1 ++ ps2 ->
     CCNprotocol (StoreData v' c C :: es) ps'
 | ccn_forward_data : forall (v v' : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps1 ps2 ps' : list Packet),
    CCNprotocol es (ps1 ++ Data v v' c C :: ps2) ->
+    Content_get v' c es = None ->
     ~ In (Request v' c) es ->
     PIT_list v' c es <> nil ->
     ps' = (PIT_Data v' c C es) ++ ps1 ++ ps2 ->
     CCNprotocol (StoreData v' c C :: ForwardData v' c :: es) ps'
 | ccn_store_forward : forall (v v' : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps1 ps2 ps' : list Packet),
    CCNprotocol es (ps1 ++ Data v v' c C :: ps2) ->
+    Content_get v' c es = None ->
     In (Request v' c) es ->
     PIT_list v' c es <> nil ->
     ps' = (PIT_Data v' c C es) ++ ps1 ++ ps2 ->
     CCNprotocol (StoreData v' c C :: ForwardData v' c :: es) ps'
 | ccn_drop_data : forall (v v' : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps1 ps2 ps' : list Packet),
    CCNprotocol es (ps1 ++ Data v v' c C :: ps2) ->
-    ~ In (Request v' c) es ->
-    PIT_list v' c es = nil ->
+    Content_get v' c es <> None ->
     ps' = ps1 ++ ps2 ->
     CCNprotocol es ps'.
 (* 基本Dataパケットをdropすることはない。例外はInterestパケットをCSを持ってる相手に二回以上連続で送った場合。 *)
