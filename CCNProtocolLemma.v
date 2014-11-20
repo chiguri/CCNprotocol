@@ -172,14 +172,14 @@ intros; induction H; simpl; auto.
   elim n; auto.
  destruct Node_eq_dec with v v'; auto.
   destruct Content_Name_eq_dec; auto.
-   subst; intro H3; cbv in H3; inversion H3.
+   subst; intro H4; cbv in H4; inversion H4.
  destruct Node_eq_dec with v v'; auto.
   destruct Content_Name_eq_dec; auto.
-   subst; intro H3; cbv in H3; inversion H3.
+   subst; intro H5; cbv in H5; inversion H5.
  destruct Node_eq_dec with v v'; auto.
   destruct Content_Name_eq_dec; auto.
-   subst; intro H3; cbv in H3; inversion H3.
-Qed. 
+   subst; intro H5; cbv in H5; inversion H5.
+Qed.
 
 
 
@@ -187,11 +187,8 @@ Lemma ForwardInterest_Not_Content_get :
  forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol (ForwardInterest v c :: es) ps ->
    Content_get v c (ForwardInterest v c :: es) = None.
-intros; remember (ForwardInterest v c :: es); revert v c es Heql; induction H; intros; subst; try discriminate.
+intros; remember (ForwardInterest v c :: es); revert v c es Heql; induction H; intros; subst; try discriminate; eauto.
  inversion Heql; subst; auto.
- eauto.
- eauto.
- eauto.
 Qed.
 
 
@@ -217,9 +214,9 @@ intros; remember (es1 ++ Request v c :: es2); revert v c es1 es2 Heql; induction
  destruct es1; simpl in Heql; inversion Heql...
  destruct es1; simpl in Heql; inversion Heql...
  destruct es1; simpl in Heql; inversion Heql.
-  subst; destruct es1; simpl in H4; inversion H4...
+  subst; destruct es1; simpl in H5; inversion H5...
  destruct es1; simpl in Heql; inversion Heql.
-  subst; destruct es1; simpl in H4; inversion H4...
+  subst; destruct es1; simpl in H5; inversion H5...
 Qed.
 
 
@@ -243,9 +240,9 @@ intros; remember (es1 ++ ForwardInterest v c :: es2); revert v c es1 es2 Heql; i
  destruct es1; simpl in Heql; inversion Heql...
  destruct es1; simpl in Heql; inversion Heql...
  destruct es1; simpl in Heql; inversion Heql.
-  subst; destruct es1; simpl in H4; inversion H4...
+  subst; destruct es1; simpl in H5; inversion H5...
  destruct es1; simpl in Heql; inversion Heql.
-  subst; destruct es1; simpl in H4; inversion H4...
+  subst; destruct es1; simpl in H5; inversion H5...
 Qed.
 
 
@@ -348,16 +345,16 @@ intros v1 v2 c es1 es2 ps H; remember (es1 ++ ForwardInterest v1 c :: es2);
    destruct Node_eq_dec with v2 v'...
     destruct Content_Name_eq_dec with c c0...
      subst; cbv in H5; discriminate.
-   apply in_change in H2; destruct H2...
-    inversion H2.
+   apply in_change in H3; destruct H3...
+    inversion H3.
  destruct es1; simpl in Heql; inversion Heql; subst.
   destruct es1; simpl in Heql; inversion Heql; subst.
    destruct IHCCNprotocol with es1 es2...
     destruct Node_eq_dec with v2 v'...
      destruct Content_Name_eq_dec with c c0...
-     subst; cbv in H5; discriminate.
-   apply in_change in H2; destruct H2.
-    inversion H2.
+     subst; cbv in H6; discriminate.
+   apply in_change in H3; destruct H3.
+    inversion H3.
     right.
      apply in_or_app; auto.
  destruct es1; simpl in Heql; inversion Heql; subst.
@@ -365,15 +362,17 @@ intros v1 v2 c es1 es2 ps H; remember (es1 ++ ForwardInterest v1 c :: es2);
    destruct IHCCNprotocol with es1 es2...
     destruct Node_eq_dec with v2 v'...
      destruct Content_Name_eq_dec with c c0...
-     subst; cbv in H5; discriminate.
-   apply in_change in H2; destruct H2.
-    inversion H2.
+     subst; cbv in H6; discriminate.
+   apply in_change in H3; destruct H3.
+    inversion H3.
     right.
      apply in_or_app; auto.
  destruct IHCCNprotocol with es1 es2...
-  apply in_change in H2; destruct H2...
-   inversion H2.
+  apply in_change in H1; destruct H1...
+   inversion H1.
 Qed.
+
+
 
 
 
@@ -386,6 +385,9 @@ intros v c es ps H; revert v c; induction H; intros; simpl in *; auto;
  destruct (Node_eq_dec v0 v'); auto;
   destruct (Content_Name_eq_dec c0 c); subst; auto.
 Qed.
+
+
+
 
 
 End CCN_Protocol_Lemma.
