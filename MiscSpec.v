@@ -39,6 +39,44 @@ End Sum_eq.
 
 
 
+Section Exists.
+
+Context {A : Type}.
+
+Require Import List.
+
+Lemma exists_longer : forall (P : list A -> Prop) (l : list A),
+  (exists l' : list A, P (l' ++ l)) -> exists l' : list A, P l'.
+intros.
+ destruct H.
+  exists (x ++ l); auto.
+Qed.
+
+
+Lemma exists_app_assoc_l : forall (P : list A -> Prop) (l1 l2 : list A) (f : list A -> list A),
+ (exists l : list A, P ((f l ++ l1) ++ l2))
+ -> exists l : list A, P (f l ++ l1 ++ l2).
+intros.
+ destruct H.
+  exists x; rewrite app_assoc; auto.
+Qed.
+
+
+
+Lemma exists_app_assoc_r : forall (P : list A -> Prop) (l1 l2 : list A) (f : list A -> list A),
+ (exists l : list A, P (f l ++ l1 ++ l2))
+ -> exists l : list A, P ((f l ++ l1) ++ l2).
+intros.
+ destruct H.
+  exists x; rewrite <- app_assoc; auto.
+Qed.
+
+
+
+End Exists.
+
+
+
 Section List.
 
 Require Import List.
