@@ -171,14 +171,144 @@ Qed.
 
 Theorem CCN_Forward_Request :
   forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
-   FIBreachable v c ->
+   (exists v' : Node, Connected v v' /\ FIBreachable v' c) ->
     CCNprotocol (Request v c :: es) ps ->
      forall (es' : list Event) (ps' : list Packet),
       CCNprotocol (es' ++ Request v c :: es) ps' ->
        (exists C : Content c, In (StoreData v c C) (es' ++ Request v c :: es))
        \/ (exists (C : Content c) (es'' : list Event) (ps'' : list Packet),
              CCNprotocol (StoreData v c C :: es'' ++ es' ++ Request v c :: es) ps'').
-Admitted.
+Proof with eauto.
+intros; destruct H as [ v2 [ H H2 ] ].
+ assert (Content_get v c (Request v c :: es) = None) by (eapply Request_Not_Content_get; eauto).
+  case_eq (Content_get v c (es' ++ Request v c :: es)); intros.
+   left; destruct (Content_get_app_In_Store_Data _ _ es' _ H3).
+    rewrite H4; intro H5; discriminate.
+    destruct (in_split _ _ H5) as [ es0 [ es1 H6 ] ]; subst.
+     exists x; apply in_or_app; left; apply in_or_app; simpl...
+   right; destruct in_dec_forward with v2 c (es' ++ Request v c :: es).
+    destruct (in_split _ _ i) as [ es1 [ es2 H5 ] ].
+     rewrite H5 in H1; destruct (split_ForwardInterest_CCNprotocol _ _ _ _ _ H1).
+      destruct (CCN_Forward_Interest _ _ _ _ H2 H6 _ _ H1) as [ [ C H7 ] | [ C [ es0 [ ps0 H7 ] ] ] ].
+       assert (H8 := StoreData_Content_get _ _ _ _ _ H1 H7).
+        apply option_None_Some in H8; destruct H8.
+         rewrite <- H5 in *; destruct (Request_Content_get_Data_or_Interest _ _ _ _ _ _ _ H1 H H2 H8 H4).
+          destruct (in_split _ _ H9) as [ ps1 [ ps2 H10 ] ].
+           exists x0; apply Request_or_Forward_with_Data_StoreData with (v2 := v2) (ps := ps')...
+            left; apply in_or_app; simpl...
+          destruct (in_split _ _ H9) as [ ps1 [ ps2 H10 ] ]; subst.
+           assert (H10 := ccn_reply_data _ _ _ _ _ _ _ _ H1 H8 eq_refl).
+            exists x0; apply exists_longer with (l := [ReplyData v2 c]).
+             apply (exists_app_assoc_r (fun l => exists ps'' : list Packet, CCNprotocol (StoreData v c x0 :: l) ps'')).
+              apply Request_or_Forward_with_Data_StoreData with (v2 := v2) (ps := Data v2 v c x0 :: ps1 ++ ps2)...
+               left; apply in_or_app; right; apply in_or_app; simpl...
+               simpl...
+       case_eq (Content_get v c (StoreData v2 c C :: es0 ++ es1 ++ ForwardInterest v2 c :: es2)); intros.
+        destruct (Content_get_app_In_Store_Data _ _ (StoreData v2 c C :: es0) _ H4).
+         rewrite H5; simpl app; rewrite H8; intro; discriminate.
+         destruct (in_split _ _ H9) as [ es3 [ es4 H10 ] ].
+          exists x0; rewrite app_comm_cons in H7; rewrite H10 in H7.
+           rewrite <- app_assoc in H7; simpl in H7; destruct (split_StoreData_CCNprotocol _ _ _ _ _ _ H7).
+            exists es4; exists x1.
+             rewrite H5; auto.
+        assert (In (StoreData v2 c C) (StoreData v2 c C :: es0 ++ es1 ++ ForwardInterest v2 c :: es2)).
+         simpl...
+         assert (H10 := StoreData_Content_get v2 c C _ _ H7 H9).
+          apply option_None_Some in H10; destruct H10.
+           rewrite <- H5 in *; rewrite app_comm_cons in H7; rewrite app_assoc in H7.
+            rewrite app_comm_cons in H8, H10; rewrite app_assoc in H8, H10.
+             destruct (Request_Content_get_Data_or_Interest _ _ _ _ _ _ _ H7 H H2 H10 H8).
+              exists x0; destruct (in_split _ _ H11) as [ es3 [ es4 H12 ] ].
+               apply exists_longer with (l := StoreData v2 c C :: es0).
+                apply (exists_app_assoc_r (fun l => exists ps'' : list Packet, CCNprotocol (StoreData v c x0 :: l) ps'')).
+                 simpl; apply Request_or_Forward_with_Data_StoreData with (v2 := v2) (ps := ps0)...
+                  left; simpl; right; apply in_or_app; right; apply in_or_app; simpl...
+                  simpl in H7; rewrite <- app_assoc in H7...
+                  simpl app in H8; rewrite <- app_assoc in H8...
+             destruct (in_split _ _ H11) as [ ps1 [ ps2 H12 ] ]; subst.
+              assert (H13 := ccn_reply_data _ _ _ _ _ _ _ _ H7 H10 eq_refl).
+               exists x0; apply exists_longer with (l := ReplyData v2 c :: StoreData v2 c C :: es0).
+                apply (exists_app_assoc_r (fun l => exists ps'' : list Packet, CCNprotocol (StoreData v c x0 :: l) ps'')).
+                 apply Request_or_Forward_with_Data_StoreData with (v2 := v2) (ps := Data v2 v c x0 :: ps1 ++ ps2)...
+                  left; apply in_or_app; right; apply in_or_app; simpl...
+                  simpl; simpl in H13; rewrite <- app_assoc in H13...
+                  simpl app in H8; rewrite <- app_assoc in H8; simpl...
+                  simpl...
+  case_eq (Content_get v2 c (es' ++ Request v c :: es)); intros.
+   destruct (Request_Content_get_Data_or_Interest _ _ _ _ _ _ _ H1 H H2 H5 H4).
+    exists c0; apply Request_or_Forward_with_Data_StoreData with (v2 := v2) (ps := ps')...
+     left; apply in_or_app; simpl...
+    exists c0; apply exists_longer with (l := [ReplyData v2 c]).
+     apply (exists_app_assoc_r (fun l => exists ps'' : list Packet, CCNprotocol (StoreData v c c0 :: l) ps'')).
+      destruct (in_split _ _ H6) as [ l1 [ l2 H7 ] ]; subst.
+       assert (H7 := ccn_reply_data _ _ _ _ _ _ _ _ H1 H5 eq_refl).
+        simpl.
+         apply Request_or_Forward_with_Data_StoreData with (v2 := v2) (ps := Data v2 v c c0 :: l1 ++ l2)...
+          left; simpl; right; apply in_or_app; simpl...
+          simpl...
+   assert (PIT_list v2 c (es' ++ Request v c :: es) = []).
+    case_eq (PIT_list v2 c (es' ++ Request v c :: es)); intros.
+     auto.
+     elim n.
+      eapply PIT_list_not_nil_ForwardInterest...
+       rewrite H6; intro; discriminate.
+    destruct (Request_Not_Content_get_PIT_or_Interest _ v2 _ _ _ _ H1)...
+     assert (H8 := In_AddPIT_In_PIT_list _ _ _ _ _ H1 H5 H7).
+      rewrite H6 in H8; simpl in H8; contradiction.
+     destruct (in_split _ _ H7) as [ ps1 [ ps2 H8 ] ]; subst.
+      assert (FIB_list v2 c <> nil).
+       intro; destruct H2.
+        eapply InitCS_Content_get.
+         exact H1.
+         eauto.
+         auto.
+        unfold FIB in H2.
+         rewrite H8 in H2; simpl in H2...
+       assert (H9 := ccn_forward_interest _ _ _ _ _ _ _ H1 H5 H6 H8 eq_refl).
+        destruct (CCN_Forward_Interest _ _ _ _ H2 H9 nil _ H9); simpl in *.
+         destruct H10 as [ C [ H10 | [ H10 | H10 ] ] ].
+          discriminate.
+          discriminate.
+          elim (StoreData_Content_get _ _ _ _ _ H1 H10)...
+         destruct H10 as [ C [ es'' [ ps'' H10 ] ] ].
+          case_eq (Content_get v c
+                   (StoreData v2 c C :: es'' ++
+                       ForwardInterest v2 c :: AddPIT v2 v c :: es' ++
+                       Request v c :: es)); intros.
+           assert (exists C0 : Content c, In (StoreData v c C0) (StoreData v2 c C :: es'')).
+            apply Content_get_app_In_Store_Data with (ForwardInterest v2 c :: AddPIT v2 v c :: es' ++ Request v c :: es)...
+             simpl app; intro H12; rewrite H12 in H11; discriminate.
+            destruct H12 as [ C0 H12 ].
+             destruct (in_split _ _ H12) as [ es1 [ es2 H13 ] ].
+              rewrite app_comm_cons in H10.
+               rewrite H13 in H10; rewrite <- app_assoc in H10; simpl app in H10.
+                destruct (split_StoreData_CCNprotocol _ _ _ _ _ _ H10).
+                 exists C0; exists (es2 ++ ForwardInterest v2 c :: [AddPIT v2 v c]); exists x.
+                  rewrite <- app_assoc; simpl...
+           assert (H12 := StoreData_Content_get v2 c C _ _ H10 (or_introl eq_refl)).
+            apply option_None_Some in H12; destruct H12.
+             repeat rewrite app_comm_cons in H10; rewrite app_assoc in H10.
+              destruct (Request_Content_get_Data_or_Interest _ _ _ x _ _ _ H10 H)...
+               rewrite <- app_assoc; simpl app...
+               rewrite <- app_assoc; simpl app...
+               exists x; apply exists_longer with (l := StoreData v2 c C :: es'' ++ ForwardInterest v2 c :: [AddPIT v2 v c]).
+                apply (exists_app_assoc_r (fun l => exists ps'' : list Packet, CCNprotocol (StoreData v c x :: l) ps'')).
+                 destruct (in_split _ _ H13) as [ l1 [ l2 H14 ] ].
+                  apply Request_or_Forward_with_Data_StoreData with (v2 := v2) (ps := ps'')...
+                   left; apply in_or_app; right; apply in_or_app; simpl...
+                   simpl; rewrite <- app_assoc; simpl.
+                    rewrite <- app_assoc in H10...
+                   simpl app; rewrite <- app_assoc; simpl app...
+               destruct (in_split _ _ H13) as [ ps3 [ ps4 H14 ] ]; subst.
+                rewrite <- app_assoc in H10; simpl app in H10; assert (H14 := ccn_reply_data _ _ _ _ _ _ _ _ H10 H12 eq_refl).
+                 exists x; apply exists_longer with (l := ReplyData v2 c :: StoreData v2 c C :: es'' ++ ForwardInterest v2 c :: [AddPIT v2 v c]).
+                  apply (exists_app_assoc_r (fun l => exists ps'' : list Packet, CCNprotocol (StoreData v c x :: l) ps'')).
+                   apply Request_or_Forward_with_Data_StoreData with (v2 := v2) (ps := Data v2 v c x :: ps3 ++ ps4).
+                    left; apply in_or_app; right; apply in_or_app; simpl...
+                    simpl app; rewrite <- app_assoc...
+                    simpl app; rewrite <- app_assoc...
+                    simpl...
+Qed.
 
 
 
