@@ -14,6 +14,23 @@ Module Protocol_Lemma := CCNProtocolLemma.CCN_Protocol_Lemma N.
 Import Protocol_Lemma.
 
 
+(*
+Lemma CCN_Packet_Connected_Interest :
+  forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
+   CCNprotocol es ps ->
+    In (Interest v1 v2 c) ps ->
+     Connected v1 v2.
+
+
+
+
+Lemma CCN_Packet_Connected_Data :
+  forall (v1 v2 : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
+   CCNprotocol es ps ->
+    In (Data v1 v2 c C) ps ->
+     Connected v1 v2.
+*)
+
 
 
 Lemma CCN_Forward_Interest :
@@ -312,6 +329,28 @@ Qed.
 
 
 
+(* If FIBreachable for any nodes, any contents, we can omit conditions from theorem *) 
+Theorem CCN_Forward_Request' :
+  (forall (v : Node) (c : Content_Name), FIBreachable v c) ->
+   forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
+    CCNprotocol (Request v c :: es) ps ->
+     forall (es' : list Event) (ps' : list Packet),
+      CCNprotocol (es' ++ Request v c :: es) ps' ->
+       (exists C : Content c, In (StoreData v c C) (es' ++ Request v c :: es))
+       \/ (exists (C : Content c) (es'' : list Event) (ps'' : list Packet),
+             CCNprotocol (StoreData v c C :: es'' ++ es' ++ Request v c :: es) ps'').
+Proof with auto.
+intros.
+apply CCN_Forward_Request with (ps := ps) (ps' := ps')...
+ destruct (H v c).
+  assert (H3 := Request_Not_Content_get v c es ps H0).
+   elim (InitCS_Content_get _ _ _ _ H0 H2)...
+  exists v2; split...
+   apply FIB_Connected with (c := c)...
+Qed.
+
+
+
 
 Theorem CCN_Backward :
   forall (v : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
@@ -327,6 +366,8 @@ revert v c C es Heqes'; induction H; intros;
  eapply PIT_list_not_nil_ForwardInterest; eauto.
  subst; left; right; auto.
 Qed.
+
+
 
 
 End CCN_Protocol_Verification.
