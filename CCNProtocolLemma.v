@@ -115,6 +115,43 @@ Qed.
 
 
 
+Lemma Broadcast_Interest_Connected :
+ forall (v v1 v2 : Node) (c1 c2 : Content_Name),
+  In (Interest v1 v2 c1) (Broadcast_Interest v c2) ->
+   Connected v1 v2.
+unfold Connected, Broadcast_Interest; intros.
+ destruct (Node_eq_dec v1 v).
+  subst; remember (Connected_list v).
+   clear Heql; induction l.
+    simpl in H; contradiction.
+    simpl in H; destruct H.
+     inversion H; subst; simpl; auto.
+     simpl; auto.
+  remember (Connected_list v).
+   clear Heql; induction l.
+    simpl in H; contradiction.
+    simpl in H; destruct H.
+     inversion H; subst; elim n; auto.
+     auto.
+Qed.
+
+
+Lemma FIB_Interest_Connected :
+ forall (v v1 v2 : Node) (c1 c2 : Content_Name),
+  In (Interest v1 v2 c1) (FIB_Interest v c2) ->
+   Connected v1 v2.
+unfold Connected, FIB_Interest; intros.
+ apply Broadcast_Interest_Connected with v c1 c2.
+  unfold Broadcast_Interest.
+   apply In_map_conservative with (l1 := FIB_list v c2).
+    intro; apply FIB_Connected.
+    auto.
+Qed.
+
+
+
+
+
 Lemma Content_get_InitCS_or_StoreData :
  forall (v : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -413,6 +450,20 @@ intros v1 v2 c C es; unfold PIT_Data; generalize (PIT_list v1 c es);
  contradiction.
  destruct H; subst; simpl; eauto.
 Qed. 
+
+
+
+Lemma In_PIT_Data_In_PIT :
+ forall (v1 v2 : Node) (c1 c2 : Content_Name) (C1 : Content c1) (C2 : Content c2) (es : list Event),
+  In (Data v1 v2 c2 C2) (PIT_Data v1 c1 C1 es) ->
+   In v2 (PIT_list v1 c1 es).
+intros v1 v2 c1 c2 C1 C2 es; unfold PIT_Data; generalize (PIT_list v1 c1 es);
+    revert v1 v2 c1 c2 C1 C2 es; induction l; intros; simpl in H.
+ contradiction.
+ simpl; destruct H.
+  inversion H; subst; auto.
+  auto.
+Qed.
 
 
 

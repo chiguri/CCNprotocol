@@ -80,11 +80,35 @@ End Exists.
 Section List.
 
 Require Import List.
+
+
 Lemma in_change : forall (A : Type) (a1 a2 : A) (as1 as2 : list A),
  In a1 (as1 ++ a2 :: as2) -> a1 = a2 \/ In a1 (as1 ++ as2).
 intros.
  apply in_app_or in H.
   simpl in H; intuition.
 Qed.
+
+Lemma map_not_in : forall (A B : Type) (f : A -> B) (b : B) (al : list A),
+ (forall a : A, f a <> b) -> ~ In b (map f al).
+intros; induction al; simpl in *.
+ auto.
+ intro H0; destruct H0.
+  elim (H a); auto.
+  apply IHal; auto.
+Qed.
+
+Lemma In_map_conservative :
+ forall (A B : Type) (f : A -> B) (l1 l2 : list A),
+  (forall x : A, In x l1 -> In x l2) -> forall y : B, In y (map f l1) -> In y (map f l2).
+intros; induction l1.
+ simpl in H0; contradiction.
+ simpl in *; destruct H0.
+  assert (In a l2) by eauto.
+   apply in_split in H1; destruct H1 as [l3 [ l4 H1 ] ]; subst.
+    rewrite map_app; apply in_or_app; simpl; auto.
+  eauto.
+Qed.
+
 
 End List.

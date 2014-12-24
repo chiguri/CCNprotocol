@@ -13,23 +13,169 @@ Module CCN_Protocol_Verification (N : CCNTopology.CCN_Network).
 Module Protocol_Lemma := CCNProtocolLemma.CCN_Protocol_Lemma N.
 Import Protocol_Lemma.
 
-
-(*
-Lemma CCN_Packet_Connected_Interest :
+(* All Interest packets in CCNprotocol are sent between connected nodes *)
+Theorem CCN_Packet_Interest_Connected :
   forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
    CCNprotocol es ps ->
     In (Interest v1 v2 c) ps ->
      Connected v1 v2.
+Proof with eauto.
+intros v1 v2 c es ps H; revert v1 v2 c; unfold Connected; induction H; simpl; intros; subst.
++contradiction.
++apply in_app_or in H2; destruct H2...
+  eapply Broadcast_Interest_Connected...
++apply in_app_or in H4; destruct H4.
+  eapply FIB_Interest_Connected...
+  apply IHCCNprotocol with (c0 := c0).
+   apply in_app_or in H3; apply in_or_app; destruct H3; simpl...
++apply IHCCNprotocol with (c0 := c0).
+  apply in_app_or in H5; apply in_or_app; destruct H5; simpl...
++apply IHCCNprotocol with (c0 := c0).
+  apply in_app_or in H3; apply in_or_app; destruct H3; simpl...
++apply IHCCNprotocol with (c0 := c0).
+  apply in_app_or in H3; apply in_or_app; destruct H3; simpl...
++apply IHCCNprotocol with (c0 := c0).
+  simpl in H2; destruct H2.
+   inversion H1.
+   apply in_app_or in H1; apply in_or_app; destruct H1; simpl...
++apply IHCCNprotocol with (c0 := c0).
+  apply in_app_or in H4; apply in_or_app; destruct H4; simpl...
++apply IHCCNprotocol with (c0 := c0).
+  apply in_app_or in H4; destruct H4.
+   unfold PIT_Data in H3.
+    elimtype False.
+     eapply map_not_in.
+      Focus 2. eauto.
+      simpl; intros; intro.
+       inversion H4.
+   apply in_app_or in H3; apply in_or_app; destruct H3; simpl...
++apply IHCCNprotocol with (c0 := c0).
+  apply in_app_or in H4; destruct H4.
+   unfold PIT_Data in H3.
+    elimtype False.
+     eapply map_not_in.
+      Focus 2. eauto.
+      simpl; intros; intro.
+       inversion H4.
+   apply in_app_or in H3; apply in_or_app; destruct H3; simpl...
++apply IHCCNprotocol with (c0 := c0).
+  apply in_app_or in H2; apply in_or_app; destruct H2; simpl...
+Qed.
+
+
+
+Lemma CCN_PIT_Connected :
+ forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
+  CCNprotocol es ps ->
+   In (AddPIT v2 v1 c) es ->
+   Connected v1 v2.
+Proof with eauto.
+intros; induction H; simpl in *...
++contradiction.
++destruct H0.
+  inversion H0.
+  eauto.
++destruct H0 as [ H0 | [ H0 | H0 ] ].
+  inversion H0.
+  inversion H0; subst.
+   apply CCN_Packet_Interest_Connected with c es (ps1 ++ Interest v1 v2 c :: ps2)...
+    apply in_or_app; simpl...
+   eauto.
++destruct H0 as [ H0 | H0 ]...
+  inversion H0; subst.
+   apply CCN_Packet_Interest_Connected with c es (ps1 ++ Interest v1 v2 c :: ps2)...
+    apply in_or_app; simpl...
++destruct H0 as [ H0 | H0 ]...
+  inversion H0.
++destruct H0 as [ H0 | H0 ]...
+  inversion H0.
++destruct H0 as [ H0 | [ H0 | H0 ] ].
+  inversion H0.
+  inversion H0.
+  eauto.
++destruct H0 as [ H0 | [ H0 | H0 ] ].
+  inversion H0.
+  inversion H0.
+  eauto.
+Qed.
 
 
 
 
-Lemma CCN_Packet_Connected_Data :
+(* All Data packets in CCNprotocol are sent between connected nodes *)
+Theorem CCN_Packet_Data_Connected :
   forall (v1 v2 : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
    CCNprotocol es ps ->
     In (Data v1 v2 c C) ps ->
      Connected v1 v2.
-*)
+Proof with eauto.
+intros v1 v2 c C es ps H; revert v1 v2 c C; unfold Connected; induction H; simpl; intros; subst.
++contradiction.
++apply in_app_or in H2; destruct H2.
+  unfold Broadcast_Interest in H1.
+   elimtype False.
+    eapply map_not_in.
+     Focus 2. eauto.
+      simpl; intros; intro.
+       inversion H2.
+  eauto.
++apply in_app_or in H4; destruct H4.
+  unfold FIB_Interest in H3.
+   elimtype False.
+    eapply map_not_in.
+     Focus 2. eauto.
+      simpl; intros; intro.
+       inversion H4.
+  apply IHCCNprotocol with (c0 := c0) (C := C).
+   apply in_or_app; apply in_app_or in H3; destruct H3; simpl...
++apply IHCCNprotocol with (c0 := c0) (C := C).
+  apply in_or_app; apply in_app_or in H5; destruct H5; simpl...
++apply IHCCNprotocol with (c0 := c0) (C := C).
+  apply in_or_app; apply in_app_or in H3; destruct H3; simpl...
++apply IHCCNprotocol with (c0 := c0) (C := C).
+  apply in_or_app; apply in_app_or in H3; destruct H3; simpl...
++simpl in H2; destruct H2.
+  inversion H1; subst.
+   apply CCN_Packet_Interest_Connected with (v1 := v2) (v2 := v1) (c := c0) in H.
+    apply Connected_sym in H.
+     unfold Connected in H...
+    apply in_or_app; simpl...
+  apply IHCCNprotocol with (c0 := c0) (C := C0). (* we use C, but printed as C0...? *)
+   apply in_or_app; simpl; apply in_app_or in H1; destruct H1...
++apply IHCCNprotocol with (c0 := c0) (C0 := C0).
+  apply in_or_app; simpl; apply in_app_or in H4; destruct H4...
++apply in_app_or in H4; destruct H4.
+  destruct Node_eq_dec with v1 v'.
+   subst; apply In_PIT_Data_In_PIT in H3.
+    eapply In_PIT_list_In_AddPIT in H3...
+     apply Connected_sym.
+      eapply CCN_PIT_Connected...
+   unfold PIT_Data in H3.
+    elimtype False; eapply map_not_in.
+     Focus 2. eauto.
+     intros; simpl; intro; elim n.
+      inversion H4; auto.
+  apply IHCCNprotocol with (c0 := c0) (C0 := C0).
+   apply in_or_app; simpl; apply in_app_or in H3; destruct H3...
++apply in_app_or in H4; destruct H4.
+  destruct Node_eq_dec with v1 v'.
+   subst; apply In_PIT_Data_In_PIT in H3.
+    eapply In_PIT_list_In_AddPIT in H3...
+     apply Connected_sym.
+      eapply CCN_PIT_Connected...
+   unfold PIT_Data in H3.
+    elimtype False; eapply map_not_in.
+     Focus 2. eauto.
+     intros; simpl; intro; elim n.
+      inversion H4; auto.
+  apply IHCCNprotocol with (c0 := c0) (C0 := C0).
+   apply in_or_app; simpl; apply in_app_or in H3; destruct H3...
++apply IHCCNprotocol with (c0 := c0) (C0 := C0).
+  apply in_or_app; simpl; apply in_app_or in H2; destruct H2...
+Qed.
+
+
+
 
 
 
