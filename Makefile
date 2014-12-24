@@ -30,8 +30,8 @@ define donewline
 
 
 endef
-includecmdwithout@ = $(eval $(subst @,$(donewline),$(shell { $(1) | tr -d '\r' | tr '\n' '@'; }))) \
-$(call includecmdwithout@,$(COQBIN)coqtop -config)
+#includecmdwithout@ = $(eval $(subst @,$(donewline),$(shell { $(1) | tr -d '\r' | tr '\n' '@'; }))) \
+#$(call includecmdwithout@,$(COQBIN)coqtop -config)
 
 ##########################
 #                        #
