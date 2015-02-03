@@ -9,9 +9,12 @@ Require CCNProtocolLemma.
 
 
 Module CCN_Protocol_Verification (N : CCNTopology.CCN_Network).
+Import N.
 
 Module Protocol_Lemma := CCNProtocolLemma.CCN_Protocol_Lemma N.
 Import Protocol_Lemma.
+
+Import Protocol.
 
 (* All Interest packets in CCNprotocol are sent between connected nodes *)
 Theorem CCN_Packet_Interest_Connected :

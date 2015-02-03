@@ -14,10 +14,10 @@ Module CCN_Protocol_Lemma (N : CCNTopology.CCN_Network).
     Otherwise, Coq cannot unify constructors in CCNProtocol.
     Instead, we should use only "Import CCN_Protocol_Lemma" in verification file;
    otherwise, Coq cannot determine which definitions to use. *)
-Export N.
+Import N.
 
 Module Protocol := CCNProtocol.CCN_Protocol N.
-Export Protocol.
+Import Protocol.
 
 (*
 The following lemma requires "Content is distinctive" (absolutely true),
