@@ -1,3 +1,7 @@
+(* Written by Sosuke Moriguchi (chiguri), Kwansei Gakuin University *)
+
+(** * Functor from Network Topology to correctness proofs of the CCN protocol *)
+
 Require Import List.
 Import ListNotations.
 
@@ -16,7 +20,7 @@ Import Protocol_Lemma.
 
 Import Protocol.
 
-(* All Interest packets in CCNprotocol are sent between connected nodes *)
+(** All Interest packets are sent between connected nodes *)
 Theorem CCN_Packet_Interest_Connected :
   forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
    CCNprotocol es ps ->
@@ -67,6 +71,7 @@ Qed.
 
 
 
+(** All PIT entries point only connected nodes *)
 Lemma CCN_PIT_Connected :
  forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -105,7 +110,7 @@ Qed.
 
 
 
-(* All Data packets in CCNprotocol are sent between connected nodes *)
+(** All data packets are sent between connected nodes *)
 Theorem CCN_Packet_Data_Connected :
   forall (v1 v2 : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
    CCNprotocol es ps ->
@@ -182,6 +187,7 @@ Qed.
 
 
 
+(** Forward lemma for forwarding interest packets *)
 Lemma CCN_Forward_Interest :
   forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
    FIBreachable v c ->
@@ -341,6 +347,7 @@ Qed.
 
 
 
+(** Forward lemma for requests *)
 Theorem CCN_Forward_Request :
   forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
    (exists v' : Node, Connected v v' /\ FIBreachable v' c) ->
@@ -484,7 +491,7 @@ Qed.
 
 
 
-(* If FIBreachable for any nodes, any contents, we can omit conditions from theorem *) 
+(** If FIBreachable for any nodes, any contents, we can omit conditions from theorem *) 
 Theorem CCN_Forward_Request' :
   (forall (v : Node) (c : Content_Name), FIBreachable v c) ->
    forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
@@ -506,7 +513,7 @@ Qed.
 
 
 
-
+(** Backward lemma *)
 Theorem CCN_Backward :
   forall (v : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
    CCNprotocol (StoreData v c C :: es) ps ->

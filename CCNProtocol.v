@@ -1,3 +1,6 @@
+(* Written by Sosuke Moriguchi (chiguri), Kwansei Gakuin University *)
+
+(** * Functor from Network Topology to a CCN protocol on the network *)
 
 Require Import List.
 Import ListNotations.
@@ -6,8 +9,6 @@ Require CCNTopology.
 
 
 
-(** Module (functor) using CCN_Network (topology) N *)
-(** This makes CCN protocol on N *)
 Module CCN_Protocol (N : CCNTopology.CCN_Network).
 Import N.
 
@@ -23,15 +24,14 @@ Inductive Event :=
 | ForwardInterest : Node -> Content_Name -> Event
 | AddPIT : Node -> Node -> Content_Name -> Event
 | ReplyData : Node -> Content_Name -> Event
-| ForwardData : Node -> Content_Name -> Event (* Dataを送るとPITが消去 *)
+| ForwardData : Node -> Content_Name -> Event (* ForwardData delete PIT entries for the Content_Name *)
 | StoreData : Node -> forall c : Content_Name, Content c -> Event.
-(* CSからのData削除を入れるか考え中だが、今回は見送り。
-入れるとしたらInitCSに注意すること。あとはstraightforward。 *)
-(* あと、性質に使わないのでpacket dropについてeventにしていないが、
-もし必要ならばすること。多分基本的にはなにも変わらない。 *)
+(* You may introduce deletions of contents in CS.
+   If doing so, you should care about InitCS. *)
+(* Droping packet is not an event in this formalization, but it is not matter. *)
 
 
-(** Get Content : If this returns None, the content is not stored / CS match fails *)
+(** Get Content : If this returns None, the content is not stored, i.e., CS match fails *)
 Fixpoint Content_get (v : Node) (c : Content_Name) (es : list Event) : option (Content c) :=
 match es with
 | nil =>
@@ -49,7 +49,7 @@ end.
 
 
 
-(** Get PIT list : If this returns nil, no PIT is checked / PIT match fails *)
+(** Get PIT list : If this returns nil, no PIT entries are added / PIT match fails *)
 Fixpoint PIT_list (v : Node) (c : Content_Name) (es : list Event) : list Node :=
 match es with
 | nil => nil
@@ -74,28 +74,20 @@ end.
 
 
 
-(** list of interest packet (used in request) *)
+(** List of interest packet for [c] sent by user [v] *)
 Definition Broadcast_Interest (v : Node) (c : Content_Name) : list Packet :=
   map (fun v' => Interest v v' c) (Connected_list v).
 
-(** list of interest packet (used in forwarding interest packet *)
+(** List of interest packet for [c] forwarded by user [v] *)
 Definition FIB_Interest (v : Node) (c : Content_Name) : list Packet :=
   map (fun v' => Interest v v' c) (FIB_list v c). 
 
+(** List of data packet for [c] forwarded by user [v] to nodes in PIT entries *)
 Definition PIT_Data (v : Node) (c : Content_Name) (C : Content c) (es : list Event) : list Packet :=
   map (fun v' => Data v v' c C) (PIT_list v c es).
 
-(*
-疑問：問い：FIB_reachableであることはForwardを満たすことの必要十分条件か？
-答え：RequestがFIBマッチをするならYes、FIBマッチをせずに全方向に投げるならNo.
-Noの根拠：A-B-CというトポロジーでAの持つコンテンツについて、CはFIBをBに向けていないとする。
-BはFIBでAを指すいるとき、上の条件に対してデータが帰ってくるかについては綺麗に分かれる。
-問い：ノードはRequest時にFIBマッチをするか？
-答え：論文を読む限りNo。拡散する、とだけ書いてあるため。
-*)
 
-(** Definition of CCN protocol *)
-(** CCNprotocol event-list packet-list *)
+(** Definition of behaviors of the CCN protocol *)
 Inductive CCNprotocol : list Event -> list Packet -> Prop :=
 | ccn_init : CCNprotocol nil nil
 | ccn_request : forall (v : Node) (c : Content_Name) (es : list Event) (ps ps' : list Packet),
@@ -161,10 +153,6 @@ Inductive CCNprotocol : list Event -> list Packet -> Prop :=
     Content_get v' c es <> None ->
     ps' = ps1 ++ ps2 ->
     CCNprotocol es ps'.
-(* 基本Dataパケットをdropすることはない。例外はInterestパケットをCSを持ってる相手に二回以上連続で送った場合。 *)
-(* Forwardは二回以上しないが、RequestとForwardは組み合わせられるし、Requestは何回でもできる。どうなんだろう。 *)
 
-
-(* In で使うからEventのdecision procedureを作ること *)
 
 End CCN_Protocol.

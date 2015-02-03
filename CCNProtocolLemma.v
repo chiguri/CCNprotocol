@@ -1,4 +1,7 @@
-(** About some specifications for CCN_Protocol *)
+(* Written by Sosuke Moriguchi (chiguri), Kwansei Gakuin University *)
+
+(** * Lemmas for verification of the protocol *)
+
 Require Import List.
 Import ListNotations.
 
@@ -8,22 +11,53 @@ Require CCNTopology.
 Require CCNProtocol.
 
 
-(** Lemma for verification *)
 Module CCN_Protocol_Lemma (N : CCNTopology.CCN_Network).
-(** To use lemmas in this file, we use "Export" rather than "Import".
-    Otherwise, Coq cannot unify constructors in CCNProtocol.
-    Instead, we should use only "Import CCN_Protocol_Lemma" in verification file;
-   otherwise, Coq cannot determine which definitions to use. *)
+
 Import N.
 
 Module Protocol := CCNProtocol.CCN_Protocol N.
 Import Protocol.
 
+
+(** Connected or not should be decidable : this is proven from the requirements of network [N]. *)
+Lemma Connected_dec : forall v1 v2 : Node, {Connected v1 v2} + {~ Connected v1 v2}.
+unfold Connected.
+intros.
+apply in_dec.
+apply Node_eq_dec.
+Qed.
+
+(** FIB pointed or not should be decidable : this is proven from the requirements of network [N]. *)
+Lemma FIB_dec : forall (v1 v2 : Node) (c : Content_Name), {FIB v1 c v2} + {~ FIB v1 c v2}.
+unfold FIB.
+intros.
+apply in_dec.
+apply Node_eq_dec.
+Qed.
+
+
+
+(** Small lemma for decision procedure of content_name *)
+Lemma Content_Name_eq_left : forall c : Content_Name, exists x : c = c, Content_Name_eq_dec c c = left x.
+intro.
+destruct (Content_Name_eq_dec c c).
+exists e; auto.
+elim n; auto.
+Qed.
+
+Lemma Content_Name_neq_right : forall c1 c2 : Content_Name, c1 <> c2 -> exists x : c1 <> c2, Content_Name_eq_dec c1 c2 = right x.
+intros.
+destruct (Content_Name_eq_dec c1 c2).
+elim H; auto.
+exists n; auto.
+Qed.
+
+
+
 (*
-The following lemma requires "Content is distinctive" (absolutely true),
-but in CCNTopology, we do not define such specification.
-Fortunately, we do not need "full" distinctiveness, but only "request/forward is in list or not".
-So we prove just it.
+The following lemma requires "Content is distinguishable" (absolutely true),
+but in CCNTopology, we do not require such specification.
+This causes JM_eq rather than eq (Leibniz equality).
 
 Lemma event_eq_dec : forall e1 e2 : Event, { e1 = e2 } + { e1 <> e2 }.
 intros.
@@ -57,22 +91,11 @@ destruct e1; destruct e2; try (right; intro H; inversion H; fail).
   right; intro H; inversion H; elim n1; auto.
  destruct (Node_eq_dec n n0).
   destruct (Content_Name_eq_dec c c1).
-   (* How can we say to say c0 : Content c and c2 : Content c1 are equal or not? *)
+   (* How can we say c0 : Content c and c2 : Content c1 are equal or not? *)
 Admitted.
 *)
 
-(*
-This is valid, but not used.
 
-Lemma event_request_eq_dec : forall (v : Node) (c : Content_Name) (e : Event), { Request v c = e } + { Request v c <> e }.
-intros; destruct e; try (right; intro H; inversion H; fail).
- destruct (Node_eq_dec v n).
-  destruct (Content_Name_eq_dec c c0).
-   left; subst; auto.
-   right; intro H; inversion H; elim n0; auto.
-  right; intro H; inversion H; elim n0; auto.
-Qed.
-*)
 
 (** decision procedure that a request is in event list or not *)
 Lemma in_dec_request : forall (v : Node) (c : Content_Name) (es : list Event),
@@ -95,6 +118,7 @@ Qed.
 
 
 
+(** decision procedure that forwarding interest packet is in event list or not *)
 Lemma in_dec_forward : forall (v : Node) (c : Content_Name) (es : list Event), 
   { In (ForwardInterest v c) es } + { ~ In (ForwardInterest v c) es }.
 intros v c es; induction es.
@@ -115,6 +139,7 @@ Qed.
 
 
 
+(** a node is sent requests by another node, they connect each other *)
 Lemma Broadcast_Interest_Connected :
  forall (v v1 v2 : Node) (c1 c2 : Content_Name),
   In (Interest v1 v2 c1) (Broadcast_Interest v c2) ->
@@ -136,6 +161,7 @@ unfold Connected, Broadcast_Interest; intros.
 Qed.
 
 
+(** a node is forwarded requests by another node, they connect each other *)
 Lemma FIB_Interest_Connected :
  forall (v v1 v2 : Node) (c1 c2 : Content_Name),
   In (Interest v1 v2 c1) (FIB_Interest v c2) ->
@@ -152,6 +178,7 @@ Qed.
 
 
 
+(** If a node has contents, then it is an initial content server or it has stored already *)
 Lemma Content_get_InitCS_or_StoreData :
  forall (v : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -198,6 +225,7 @@ Qed.
 
 
 
+(** If a node is an initial content server, it has contents *)
 Lemma InitCS_Content_get :
  forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -221,6 +249,7 @@ Qed.
 
 
 
+(** If a node has stored contents, it has the contents *)
 Lemma StoreData_Content_get :
  forall (v : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -286,7 +315,7 @@ Qed.
 
 
 
-
+(** If a node requests a content, it does not have the content *)
 Lemma Request_Not_Content_get :
  forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol (Request v c :: es) ps ->
@@ -300,6 +329,7 @@ Qed.
 
 
 
+(** If a node forwards an interest packet, it does not have the content requested by the packet *)
 Lemma ForwardInterest_Not_Content_get :
  forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol (ForwardInterest v c :: es) ps ->
@@ -311,6 +341,7 @@ Qed.
 
 
 
+(** If a snapshot (network state) complies the behaviors of the CCN protocol and there have been a request, the snapshot at the request complied. *)
 Lemma split_Request_CCNprotocol :
  forall (v : Node) (c : Content_Name) (es1 es2 : list Event) (ps : list Packet),
   CCNprotocol (es1 ++ Request v c :: es2) ps ->
@@ -338,6 +369,7 @@ Qed.
 
 
 
+(** If a snapshot complies the behaviors of the CCN protocol and there have been a forwarding event, the snapshot at the event complied. *)
 Lemma split_ForwardInterest_CCNprotocol :
  forall (v : Node) (c : Content_Name) (es1 es2 : list Event) (ps : list Packet),
   CCNprotocol (es1 ++ ForwardInterest v c :: es2) ps ->
@@ -365,6 +397,7 @@ Qed.
 
 
 
+(** If a snapshot complies the behaviors of the CCN protocol and a node has stored a content, the snapshot at the storing event complied. *)
 Lemma split_StoreData_CCNprotocol :
  forall (v : Node) (c : Content_Name) (C : Content c) (es1 es2 : list Event) (ps : list Packet),
   CCNprotocol (es1 ++ StoreData v c C :: es2) ps ->
@@ -395,6 +428,7 @@ Qed.
 
 
 
+(** If a node did not have a content at a snapshot but has it currently, it stored between the snaoshot and now. *)
 Lemma Content_get_app_In_Store_Data :
  forall (v : Node) (c : Content_Name) (es1 es2 : list Event),
   Content_get v c es2 = None ->
@@ -416,7 +450,7 @@ Qed.
 
 
 
-
+(** a node sends interest packets to another node in a request if they connect *)
 Lemma Connected_In_Broadcast_Interest :
  forall (v1 v2 : Node) (c : Content_Name),
   Connected v1 v2 ->
@@ -429,6 +463,7 @@ Qed.
 
 
 
+(** a node forwards interest packets to only nodes in FIB *)
 Lemma FIB_In_FIB_Interest :
  forall (v1 v2 : Node) (c : Content_Name),
   FIB v1 c v2 ->
@@ -441,6 +476,7 @@ Qed.
 
 
 
+(** a node forwards data packets to only nodes in PIT entries *)
 Lemma PIT_In_PIT_Data :
  forall (v1 v2 : Node) (c : Content_Name) (C : Content c) (es : list Event),
   In v2 (PIT_list v1 c es) ->
@@ -453,6 +489,7 @@ Qed.
 
 
 
+(** If a node is forwarded data packets, it is in PIT entries *)
 Lemma In_PIT_Data_In_PIT :
  forall (v1 v2 : Node) (c1 c2 : Content_Name) (C1 : Content c1) (C2 : Content c2) (es : list Event),
   In (Data v1 v2 c2 C2) (PIT_Data v1 c1 C1 es) ->
@@ -468,6 +505,7 @@ Qed.
 
 
 
+(** If a node is in PIT entries of another's, there should be an event adding the node to PIT *)
 Lemma In_PIT_list_In_AddPIT :
  forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -495,6 +533,7 @@ Qed.
 
 
 
+(** If a node has been added to PIT, it is in PIT entries. *)
 Lemma In_AddPIT_In_PIT_list :
  forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -549,6 +588,7 @@ Qed.
 
 
 
+(** If an interest packet is forwarded but a content is not stored, there should be PIT entries or the packet is unprocessed. *)
 Lemma Not_Content_get_PIT_or_Interest :
  forall (v1 v2 : Node) (c : Content_Name) (es1 es2 : list Event) (ps : list Packet),
   CCNprotocol (es1 ++ ForwardInterest v1 c :: es2) ps ->
@@ -624,7 +664,7 @@ intros v1 v2 c es1 es2 ps H; remember (es1 ++ ForwardInterest v1 c :: es2);
 Qed.
 
 
-
+(** If [v1]'s FIB points to [v2], [v1] has forwarded an interest packet (to [v2]) and [v2] has a content but [v1] does not, there should be data packets ([v2] to [v1]) in the network or the unprocessed interest packet *)
 Lemma Content_get_Data_or_Interest :
  forall (v1 v2 : Node) (c : Content_Name) (C : Content c) (es1 es2 : list Event) (ps : list Packet),
   CCNprotocol (es1 ++ ForwardInterest v1 c :: es2) ps ->
@@ -809,6 +849,7 @@ Qed.
 
 
 
+(** If [v1] and [v2] connect each other, [v1] has requested but [v2] does not have a content, [v1] is in the PIT entries of [v2] or there still exists the unprocessed interest packet *)
 Lemma Request_Not_Content_get_PIT_or_Interest :
  forall (v1 v2 : Node) (c : Content_Name) (es1 es2 : list Event) (ps : list Packet),
   CCNprotocol (es1 ++ Request v1 c :: es2) ps ->
@@ -885,6 +926,7 @@ Qed.
 
 
 
+(** If [v1] and [v2] connect each other, [v1] has requested a content and [v2] has a content but [v1] does not, there should be data packets ([v2] to [v1]) in the network or the unprocessed interest packet *)
 Lemma Request_Content_get_Data_or_Interest :
  forall (v1 v2 : Node) (c : Content_Name) (C : Content c) (es1 es2 : list Event) (ps : list Packet),
   CCNprotocol (es1 ++ Request v1 c :: es2) ps ->
@@ -1069,6 +1111,7 @@ Qed.
 
 
 
+(** If a node has forwarded interest packets but does not have contents, PIT entries are not empty (there exist PIT entries) *) 
 Lemma ForwardInterest_PIT_list_not_nil :
  forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -1127,6 +1170,7 @@ Qed.
 
 
 
+(** If a node has never forwarded interest packets, PIT entries are empty *)
 Lemma Not_ForwardInterest_PIT_list_nil :
  forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
@@ -1159,7 +1203,7 @@ Qed.
 
 
 
-
+(** If a node has requested or forwarded interest packets but does not have a content, it *may* receive a content *)
 Lemma Request_or_Forward_with_Data_StoreData :
  forall (v1 v2 : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
   In (Request v1 c) es \/  In (ForwardInterest v1 c) es ->
@@ -1190,7 +1234,7 @@ Qed.
    
 
 
-
+(** If PIT entries are not empty, the node has forwarded some interest packets *)
 Lemma PIT_list_not_nil_ForwardInterest :
  forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->

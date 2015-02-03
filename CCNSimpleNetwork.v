@@ -1,15 +1,20 @@
+(* Written by Sosuke Moriguchi (chiguri), Kwansei Gakuin University *)
+
+(** * Network sample : simple network with only 7 nodes (bound) *)
+
+
 Require Import List.
 Import ListNotations.
 
 Require CCNTopology.
 
 
-(** Sample module for CCN protocol verification : only 7 nodes *)
 Module CCN_SimpleNetwork <: CCNTopology.CCN_Network.
 
 
 Inductive Nodes : Set :=
 | U | R1 | R2 | R3 | R4 | S1 | S2.
+(* we cannot declare Node directly with Inductive: due to Coq's implemetation *)
 Definition Node := Nodes.
 
 
@@ -36,14 +41,6 @@ unfold Connected; intros; destruct v1; destruct v2; simpl in *; intuition; discr
 Qed.
 
 
-Lemma Connected_dec : forall v1 v2 : Node, {Connected v1 v2} + {~ Connected v1 v2}.
-unfold Connected.
-intros.
-apply in_dec.
-apply Node_eq_dec.
-Qed.
-
-
 
 Inductive Content_Names : Set :=
 | c1 | c2.
@@ -53,19 +50,6 @@ Lemma Content_Name_eq_dec : forall c1 c2 : Content_Name, {c1 = c2} + {c1 <> c2}.
 decide equality.
 Qed.
 
-Lemma Content_Name_eq_left : forall c : Content_Name, exists x : c = c, Content_Name_eq_dec c c = left x.
-intro.
-destruct (Content_Name_eq_dec c c).
-exists e; auto.
-elim n; auto.
-Qed.
-
-Lemma Content_Name_neq_right : forall c1' c2' : Content_Name, c1' <> c2' -> exists x : c1' <> c2', Content_Name_eq_dec c1' c2' = right x.
-intros.
-destruct (Content_Name_eq_dec c1' c2').
-contradiction.
-exists n; auto.
-Qed.
 
 (** Content body : we do not care what it is. *)
 Variables Content1 Content2 : Set.
@@ -114,13 +98,6 @@ end.
 Definition FIB (v1 : Node) (c : Content_Name) (v2 : Node) := In v2 (FIB_list v1 c).
 
 
-Lemma FIB_dec : forall (v1 v2 : Node) (c : Content_Name), {FIB v1 c v2} + {~ FIB v1 c v2}.
-unfold FIB.
-intros.
-destruct c1; apply in_dec; apply Node_eq_dec.
-Qed.
-
-
 Lemma FIB_Connected : forall (v1 v2 : Node) (c : Content_Name), FIB v1 c v2 -> Connected v1 v2.
 unfold FIB; unfold Connected; unfold FIB_list; intros.
 destruct c; destruct v1; destruct v2; simpl in *; intuition.
@@ -140,6 +117,5 @@ Require CCNVerification.
 
 Module CCN_SimpleNetwork_Verification := CCNVerification.CCN_Protocol_Verification CCN_SimpleNetwork.
 Import CCN_SimpleNetwork_Verification.
-
 
 

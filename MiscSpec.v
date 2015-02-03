@@ -1,4 +1,6 @@
-(* misc. specifications *)
+(* Written by Sosuke Moriguchi (chiguri), Kwansei Gakuin University *)
+
+(** * misc. specifications for some existing data types in Coq.Init. *)
 Lemma option_Some_None :
   forall (A : Type) (x : option A), (forall a : A, x <> Some a) -> x = None.
 intros.
