@@ -3,7 +3,7 @@ CCNprotocol
 
 CCN protocol description and verification in Coq
 
-There are 5 main files and 2 examples
+There are 5 main files and 3 examples
 
 * MiscSpec.v : some lemmas for lists/options used in proofs, but not defined in standard libraries.
 * CCNTopology.v : module-type for network topology
@@ -12,5 +12,4 @@ There are 5 main files and 2 examples
 * CCNVerification.v : main specifications for CCN protocol and proofs of them
 * CCNLine.v : instance of network topology, half-line
 * CCNTree.v : instance of network topology, binary-tree
-
-
+* CCNSimpleNetwork.v : instance of network topology, 7 nodes
