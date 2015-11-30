@@ -14,7 +14,6 @@ Require Import MiscSpec.
 
 Require CCNTopology.
 Require CCNProtocol.
-Require CCNProtocolLemma.
 
 
 (* CCNのイベントをコンテンツ毎にフィルターするとやはり大丈夫という定理を示す *)
@@ -23,9 +22,7 @@ Require CCNProtocolLemma.
 Module CCN_Protocol_Content (N : CCNTopology.CCN_Network).
 Import N.
 
-Module Protocol_Lemma := CCNProtocolLemma.CCN_Protocol_Lemma N.
-Import Protocol_Lemma.
-
+Module Protocol := CCNProtocol.CCN_Protocol N.
 Import Protocol.
 
 
