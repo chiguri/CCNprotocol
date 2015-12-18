@@ -1,9 +1,9 @@
 (* Written by Sosuke Moriguchi (chiguri), Kwansei Gakuin University *)
 
-(** * Functor from Network Topology to specifications/proofs about filtering all Events and Packets about single Content_Name.
+(** * Functor from Network Topology to specifications/proofs about extracting all Events and Packets about the specific Content_Name.
 
       This guarantees that each event does not use shared resource in this settings.
-      (Be careful that if we add limit of ContentStores, we cannot prove this since other contents change the state of ContentStores.)
+      (Be careful that if we add limits of ContentStores, we cannot prove this since other contents change the state of ContentStores.)
  *)
 
 
@@ -15,9 +15,6 @@ Require Import MiscSpec.
 Require CCNTopology.
 Require CCNProtocol.
 
-
-(* CCNのイベントをコンテンツ毎にフィルターするとやはり大丈夫という定理を示す *)
-(* Verification自体はいらないはず。 *)
 
 Module CCN_Protocol_Content (N : CCNTopology.CCN_Network).
 Import N.
