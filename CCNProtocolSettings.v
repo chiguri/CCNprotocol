@@ -29,9 +29,13 @@ Parameter CMF_keep_InitCS :
 Parameter CMF_not_create_content :
   forall (v : Node) (c : Content_Name), ~InitCS v c -> CMF v c [] = None.
 
+Definition CMF_reply_consistency (v : Node) (c : Content_Name) (es : list Event) :=
+  forall (es1 es2 : list Event),
+   es = es1 ++ ReplyData v c :: es2 -> CMF v c es2 <> None.
+
 (** If once the node seems not to have requested contents, it will not have until it will receive and store the contents. *)
 Parameter CMF_consistency :
-  forall (v : Node) (c : Content_Name) (es es' : list Event), CMF v c es = None -> (forall C : Content c, ~In (StoreData v c C) es') -> CMF v c (es' ++ es) = None.
+  forall (v : Node) (c : Content_Name) (es es' : list Event), CMF_reply_consistency v c (es' ++ es) -> CMF v c es = None -> (forall C : Content c, ~In (StoreData v c C) es') -> CMF v c (es' ++ es) = None.
 
 End CCN_Protocol_Settings.
 
