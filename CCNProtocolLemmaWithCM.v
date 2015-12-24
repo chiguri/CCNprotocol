@@ -20,7 +20,7 @@ Import N.
 Import Topology.
 
 Module OldLemmas := CCNProtocolLemma.CCN_Protocol_Lemma Topology.
-Import OldLemmas.
+Export OldLemmas.
 
 Module Protocol := CCNProtocolWithCM.CCN_Protocol_CM N.
 Import Protocol.
