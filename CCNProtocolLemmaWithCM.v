@@ -22,6 +22,44 @@ Module Protocol := CCNProtocolWithCM.CCN_Protocol_CM N.
 Import Protocol.
 
 
+Lemma CMF_None_Not_InitCS :
+ forall (v : Node) (c : Content_Name) (es : list Event),
+  CMF v c es = None -> ~InitCS v c.
+intros; intro.
+destruct CMF_keep_InitCS with v c es; auto.
+rewrite H1 in H; discriminate.
+Qed.
+
+
+Lemma CMF_reply_consistency_app :
+ forall (v : Node) (c : Content_Name) (es es' : list Event),
+  CMF_reply_consistency v c es ->
+   ~In (ReplyData v c) es' ->
+   CMF_reply_consistency v c (es' ++ es).
+intros; induction es'; simpl in *.
+ now auto.
+ unfold CMF_reply_consistency in *; intros.
+ destruct es1; simpl in *.
+  inversion H1; elim H0; now auto.
+  inversion H1; subst; clear H1.
+   now eauto.
+Qed.
+  
+
+Lemma CMF_reply_consistency_split :
+ forall (v : Node) (c : Content_Name) (es es' : list Event),
+  CMF_reply_consistency v c (es' ++ es) ->
+   CMF_reply_consistency v c es.
+intros; unfold CMF_reply_consistency in *; intros.
+subst.
+apply H with (es' ++ es1).
+now apply app_assoc.
+Qed.
+  
+
+
+
+
 Lemma CCN_reply_consistency :
   forall (es : list Event) (ps : list Packet),
     CCNprotocol es ps -> forall (v : Node) (c : Content_Name), CMF_reply_consistency v c es.
@@ -46,14 +84,6 @@ induction H; intros es1 es2 Heq; destruct es1; simpl in Heq; inversion Heq; subs
  simpl; now auto.
 Qed.
 
-
-
-Lemma CCN_reply_consistency2 :
-  forall (es1 es2 : list Event) (ps : list Packet),
-    CCNprotocol (es1 ++ es2) ps -> forall (v : Node) (c : Content_Name), CMF_reply_consistency v c es2.
-intros es1 es2 ps; remember (es1 ++ es2).
-intro H; revert es1 es2 Heql; induction H; intros.
-Admitted.
 
 
 
@@ -177,140 +207,149 @@ Qed.
 
 
 
-(*
 (** If a node has contents, then it is an initial content server or it has stored already *)
-Lemma Content_get_InitCS_or_StoreData :
- forall (v : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
+Lemma CMF_InitCS_or_StoreData :
+ forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
-   Content_get v c es = Some C ->
-   InitCS v c \/ In (StoreData v c C) es.
-intros; induction H; simpl in H0; auto.
- destruct InitCS_dec with v c.
+   CMF v c es <> None ->
+   InitCS v c \/ exists (C : Content c), In (StoreData v c C) es.
+intros; induction H; auto.
++destruct InitCS_dec with v c.
   auto.
-  inversion H0.
- destruct (IHCCNprotocol H0); auto.
-  simpl; repeat right; auto.
- destruct (IHCCNprotocol H0); auto.
-  simpl; repeat right; auto.
- destruct (IHCCNprotocol H0); auto.
-  simpl; repeat right; auto.
- destruct (IHCCNprotocol H0); auto.
-  simpl; repeat right; auto.
- destruct Node_eq_dec with v v'.
-  destruct Content_Name_eq_dec with c c0.
-   subst; cbv in H0.
-    inversion H0; subst; simpl; auto.
-   destruct (IHCCNprotocol H0); auto.
-    simpl; repeat right; auto.
-  destruct (IHCCNprotocol H0); auto.
-   simpl; repeat right; auto.
- destruct Node_eq_dec with v v'.
-  destruct Content_Name_eq_dec with c c0.
-   subst; cbv in H0.
-    inversion H0; subst; simpl; auto.
-   destruct (IHCCNprotocol H0); auto.
-    simpl; repeat right; auto.
-  destruct (IHCCNprotocol H0); auto.
-   simpl; repeat right; auto.
- destruct Node_eq_dec with v v'.
-  destruct Content_Name_eq_dec with c c0.
-   subst; cbv in H0.
-    inversion H0; subst; simpl; auto.
-   destruct (IHCCNprotocol H0); auto.
-    simpl; repeat right; auto.
-  destruct (IHCCNprotocol H0); auto.
-   simpl; repeat right; auto.
+  rewrite CMF_not_create_content in H0.
+   elim H0; now auto.
+   now auto.
++case_eq (CMF v c es); intros.
+  destruct IHCCNprotocol; auto.
+   intro H4; rewrite H4 in H3; now inversion H3.
+   destruct H4; right; eexists; right; now eauto.
+  rewrite cons_app in H0.
+   rewrite (CMF_consistency v c es [Request v0 c0]) in H0.
+    elim H0; now auto.
+    apply CMF_reply_consistency_app.
+     eapply CCN_reply_consistency; now eauto.
+     intro Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+    now auto.
+    intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
++case_eq (CMF v c es); intros.
+  destruct IHCCNprotocol; auto.
+   intro H6; rewrite H6 in H5; now inversion H5.
+   destruct H6; right; eexists; simpl; now eauto.
+  rewrite cons_app2 in H0.
+   rewrite (CMF_consistency v c) in H0.
+    elim H0; now auto.
+    apply CMF_reply_consistency_app.
+     eapply CCN_reply_consistency; now eauto.
+     intro Hn; destruct Hn as [Hn | [Hn | Hn]]; now inversion Hn.
+    now auto.
+    intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
++case_eq (CMF v c es); intros.
+  destruct IHCCNprotocol; auto.
+   intro H7; rewrite H7 in H6; now inversion H6.
+   destruct H7; right; eexists; simpl; now eauto.
+  rewrite cons_app in H0.
+   rewrite (CMF_consistency v c) in H0.
+    elim H0; now auto.
+    apply CMF_reply_consistency_app.
+     eapply CCN_reply_consistency; now eauto.
+     intro Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+    now auto.
+    intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
++case_eq (CMF v c es); intros.
+  destruct IHCCNprotocol; auto.
+   intro H4; rewrite H4 in H3; now inversion H3.
+   destruct H4; right; eexists; simpl; now eauto.
+  rewrite cons_app in H0.
+   rewrite (CMF_consistency v c) in H0.
+    elim H0; now auto.
+    simpl; eapply CCN_reply_consistency.
+     eapply ccn_reply_data; now eauto.
+     now auto.
+    intros ? Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
++destruct Node_eq_dec with v v'; subst.
+  destruct Content_Name_eq_dec with c c0; subst.
+   right; exists C; simpl; now auto.
+   case_eq (CMF v' c es); intros.
+    destruct IHCCNprotocol; auto.
+     intro H5; rewrite H5 in H4; now inversion H4.
+     destruct H5; right; eexists; simpl; now eauto.
+    rewrite cons_app in H0.
+     rewrite (CMF_consistency v' c) in H0.
+      elim H0; now auto.
+      simpl; eapply CCN_reply_consistency.
+       eapply ccn_store_data; now eauto.
+      now auto.
+      intros ? Hn; destruct Hn as [Hn | Hn]; inversion Hn; subst.
+       elim n; now auto.
+  case_eq (CMF v c es); intros.
+   destruct IHCCNprotocol; auto.
+    intro H5; rewrite H5 in H4; now inversion H4.
+    destruct H5; right; eexists; simpl; now eauto.
+   rewrite cons_app in H0.
+    rewrite (CMF_consistency v c) in H0.
+     elim H0; now auto.
+     simpl; eapply CCN_reply_consistency.
+      eapply ccn_store_data; now eauto.
+     now auto.
+     intros ? Hn; destruct Hn as [Hn | Hn]; inversion Hn; subst.
+      elim n; now auto.
++destruct Node_eq_dec with v v'; subst.
+  destruct Content_Name_eq_dec with c c0; subst.
+   right; exists C; simpl; now auto.
+   case_eq (CMF v' c es); intros.
+    destruct IHCCNprotocol; auto.
+     intro H5; rewrite H5 in H4; now inversion H4.
+     destruct H5; right; eexists; simpl; now eauto.
+    rewrite cons_app2 in H0.
+     rewrite (CMF_consistency v' c) in H0.
+      elim H0; now auto.
+      simpl; eapply CCN_reply_consistency.
+       eapply ccn_forward_data; now eauto.
+      now auto.
+      intros ? Hn; destruct Hn as [Hn | [Hn | Hn]]; inversion Hn; subst.
+       elim n; now auto.
+  case_eq (CMF v c es); intros.
+   destruct IHCCNprotocol; auto.
+    intro H5; rewrite H5 in H4; now inversion H4.
+    destruct H5; right; eexists; simpl; now eauto.
+   rewrite cons_app2 in H0.
+    rewrite (CMF_consistency v c) in H0.
+     elim H0; now auto.
+     simpl; eapply CCN_reply_consistency.
+      eapply ccn_forward_data; now eauto.
+     now auto.
+     intros ? Hn; destruct Hn as [Hn | [Hn | Hn]]; inversion Hn; subst.
+      elim n; now auto.
++destruct Node_eq_dec with v v'; subst.
+  destruct Content_Name_eq_dec with c c0; subst.
+   right; exists C; simpl; now auto.
+   case_eq (CMF v' c es); intros.
+    destruct IHCCNprotocol; auto.
+     intro H5; rewrite H5 in H4; now inversion H4.
+     destruct H5; right; eexists; simpl; now eauto.
+    rewrite cons_app2 in H0.
+     rewrite (CMF_consistency v' c) in H0.
+      elim H0; now auto.
+      simpl; eapply CCN_reply_consistency.
+       eapply ccn_store_forward; now eauto.
+      now auto.
+      intros ? Hn; destruct Hn as [Hn | [Hn | Hn]]; inversion Hn; subst.
+       elim n; now auto.
+  case_eq (CMF v c es); intros.
+   destruct IHCCNprotocol; auto.
+    intro H5; rewrite H5 in H4; now inversion H4.
+    destruct H5; right; eexists; simpl; now eauto.
+   rewrite cons_app2 in H0.
+    rewrite (CMF_consistency v c) in H0.
+     elim H0; now auto.
+     simpl; eapply CCN_reply_consistency.
+      eapply ccn_store_forward; now eauto.
+     now auto.
+     intros ? Hn; destruct Hn as [Hn | [Hn | Hn]]; inversion Hn; subst.
+      elim n; now auto.
 Qed.
    
 
-
-(** If a node is an initial content server, it has contents *)
-Lemma InitCS_Content_get :
- forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
-  CCNprotocol es ps ->
-   InitCS v c ->
-   Content_get v c es <> None.
-intros; induction H; simpl; auto.
- destruct InitCS_dec with v c.
-  intro H; inversion H.
-  elim n; auto.
- destruct Node_eq_dec with v v'; auto.
-  destruct Content_Name_eq_dec; auto.
-   subst; intro H4; cbv in H4; inversion H4.
- destruct Node_eq_dec with v v'; auto.
-  destruct Content_Name_eq_dec; auto.
-   subst; intro H5; cbv in H5; inversion H5.
- destruct Node_eq_dec with v v'; auto.
-  destruct Content_Name_eq_dec; auto.
-   subst; intro H5; cbv in H5; inversion H5.
-Qed.
-
-
-
-
-(** If a node has stored contents, it has the contents *)
-Lemma StoreData_Content_get :
- forall (v : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps : list Packet),
-  CCNprotocol es ps ->
-   In (StoreData v c C) es ->
-   Content_get v c es <> None.
-intros; induction H; simpl in H0; auto.
- destruct H0.
-  discriminate.
-  eauto.
- destruct H0 as [ ? | [ ? | ? ] ].
-  discriminate.
-  discriminate.
-  eauto.
- destruct H0.
-  discriminate.
-  eauto.
- destruct H0.
-  discriminate.
-  eauto.
- destruct H0.
-  simpl.
-   destruct Node_eq_dec with v v'.
-    destruct Content_Name_eq_dec with c c0.
-     subst; cbv.
-      intro; discriminate.
-     inversion H0; elim n; auto.
-    inversion H0; elim n; auto.
-  simpl; intro H5; unfold not in IHCCNprotocol.
-   destruct Node_eq_dec with v v';
-       destruct Content_Name_eq_dec with c c0;
-        eauto.
-    subst; cbv in H5; discriminate.
- destruct H0 as [ H0 | [ H0 | H0 ] ].
-  simpl.
-   destruct Node_eq_dec with v v'.
-    destruct Content_Name_eq_dec with c c0.
-     subst; cbv.
-      intro; discriminate.
-     inversion H0; elim n; auto.
-    inversion H0; elim n; auto.
-  discriminate.
-  simpl; intro H5; unfold not in IHCCNprotocol.
-   destruct Node_eq_dec with v v';
-       destruct Content_Name_eq_dec with c c0;
-        eauto.
-    subst; cbv in H5; discriminate.
- destruct H0 as [ H0 | [ H0 | H0 ] ].
-  simpl.
-   destruct Node_eq_dec with v v'.
-    destruct Content_Name_eq_dec with c c0.
-     subst; cbv.
-      intro; discriminate.
-     inversion H0; elim n; auto.
-    inversion H0; elim n; auto.
-  discriminate.
-  simpl; intro H5; unfold not in IHCCNprotocol.
-   destruct Node_eq_dec with v v';
-       destruct Content_Name_eq_dec with c c0;
-        eauto.
-    subst; cbv in H5; discriminate.
-Qed.
-*)
 
 
 
@@ -437,26 +476,64 @@ Qed.
 
 
 
-(*
 (** If a node did not have a content at a snapshot but has it currently, it stored between the snaoshot and now. *)
 Lemma CMF_app_In_Store_Data :
  forall (v : Node) (c : Content_Name) (es1 es2 : list Event),
   CMF v c es2 = None ->
    CMF v c (es1 ++ es2) <> None ->
+   CMF_reply_consistency v c (es1 ++ es2) ->
    exists (C : Content c),
     In (StoreData v c C) es1.
 Proof with eauto.
 intros; induction es1; intros; simpl in *...
  elim H0...
- destruct a; try (destruct IHes1; eauto; fail).
-  destruct Node_eq_dec with v n.
-   destruct Content_Name_eq_dec with c c0.
-    subst; cbv in H0.
-     exists c1; auto.
-    destruct IHes1...
-   destruct IHes1...
+ case_eq (CMF v c (es1 ++ es2)); intros.
+ destruct IHes1; eauto.
+  intro H3; rewrite H3 in H2; discriminate.
+  apply CMF_reply_consistency_split with [a].
+   simpl; now auto.
+  rewrite cons_app in H0; destruct a.
+  +rewrite CMF_consistency in H0.
+    elim H0; now auto.
+    simpl; now auto.
+    now auto.
+    intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+  +rewrite CMF_consistency in H0.
+    elim H0; now auto.
+    simpl; now auto.
+    now auto.
+    intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+  +rewrite CMF_consistency in H0.
+    elim H0; now auto.
+    simpl; now auto.
+    now auto.
+    intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+  +rewrite CMF_consistency in H0.
+    elim H0; now auto.
+    simpl; now auto.
+    now auto.
+    intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+  +rewrite CMF_consistency in H0.
+    elim H0; now auto.
+    simpl; now auto.
+    now auto.
+    intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+  +destruct Node_eq_dec with n v.
+    destruct Content_Name_eq_dec with c0 c.
+     subst; exists c1; now auto.
+     rewrite CMF_consistency in H0.
+      elim H0; now auto.
+      simpl; now auto.
+      now auto.
+      intros C Hn; destruct Hn as [Hn | Hn]; inversion Hn.
+       subst; elim n0; now auto.
+    rewrite CMF_consistency in H0.
+     elim H0; now auto.
+     simpl; now auto.
+     now auto.
+     intros C Hn; destruct Hn as [Hn | Hn]; inversion Hn.
+      subst; elim n0; now auto.
 Qed.
-*)
 
 
 
@@ -1237,7 +1314,7 @@ Lemma PIT_list_not_nil_ForwardInterest :
  forall (v : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
   CCNprotocol es ps ->
    PIT_list v c es <> nil ->
-   In (ForwardInterest v c) es.
+   In_ForwardInterest v c es = true.
 intros v c es ps H; revert v c; induction H; intros; simpl in *; auto;
  destruct (Node_eq_dec v0 v'); auto;
   destruct (Content_Name_eq_dec c0 c); subst; auto.
@@ -1245,7 +1322,7 @@ Qed.
 
 
 
-
+(** If In_Request v c es = true, then corresponding In (Request v c) es*)
 
 End CCN_Protocol_Lemma_CM.
 

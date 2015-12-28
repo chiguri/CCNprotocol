@@ -16,6 +16,31 @@ Import Topology.
 
 
 
+(** Exists ForwardInterest or not *)
+Fixpoint In_ForwardInterest (v : Node) (c : Content_Name) (es : list Event) : bool :=
+match es with
+| nil => false
+| ForwardInterest v' c' :: es' =>
+    match Node_eq_dec v v' with
+    | left _ => match Content_Name_eq_dec c c' with
+                | left _ => true
+                | right _ => In_ForwardInterest v c es'
+                end
+    | right _ => In_ForwardInterest v c es'
+    end
+| StoreData v' c' _ :: es' =>
+    match Node_eq_dec v v' with
+    | left _ => match Content_Name_eq_dec c c' with
+                | left _ => false
+                | right _ => In_ForwardInterest v c es'
+                end
+    | right _ => In_ForwardInterest v c es'
+    end
+| _ :: es' => In_ForwardInterest v c es'
+end.
+
+
+
 (** Exists Request or not *)
 Fixpoint In_Request (v : Node) (c : Content_Name) (es : list Event) : bool :=
 match es with
@@ -38,6 +63,7 @@ match es with
     end
 | _ :: es' => In_Request v c es'
 end.
+
 
 
 

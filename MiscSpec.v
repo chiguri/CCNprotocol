@@ -82,6 +82,18 @@ End Exists.
 Section List.
 
 Require Import List.
+Import ListNotations.
+
+Lemma cons_app : forall (A : Type) (a : A) (al : list A),
+ a :: al = [a] ++ al.
+intros; simpl; now auto.
+Qed.
+
+
+Lemma cons_app2 : forall (A : Type) (a1 a2 : A) (al : list A),
+ a1 :: a2 :: al = [a1; a2] ++ al.
+intros; simpl; now auto.
+Qed.
 
 
 Lemma in_change : forall (A : Type) (a1 a2 : A) (as1 as2 : list A),
