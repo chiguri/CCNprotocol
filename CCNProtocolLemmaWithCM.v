@@ -13,7 +13,7 @@ Require CCNContentManagement.
 Require CCNProtocolWithCM.
 
 
-Module CCN_Protocol_Lemma_CM (N : CCNContentManagement.CCN_Content_Managements).
+Module CCN_Protocol_Lemma_CM (N : CCNContentManagement.CCN_Content_Management).
 
 Import N.
 Import Topology.
@@ -163,6 +163,28 @@ intros v c es; induction es.
      inversion H; elim n1; auto.
      auto.
 Qed.
+
+
+
+(** decision procedure that storing data exists in event list or not *)
+Lemma in_dec_storedata : forall (v : Node) (c : Content_Name) (es : list Event), 
+  { exists (C : Content c), In (StoreData v c C) es } + { forall (C : Content c), ~In (StoreData v c C) es }.
+intros v c es; induction es.
+ right; intros C H; inversion H.
+ destruct IHes.
+  left; destruct e as [C e]; exists C; right; now auto.
+  destruct a; try (right; intros C H; destruct H as [H | H]; [inversion H | apply n with C; auto]; fail).
+   destruct (Node_eq_dec v n0).
+    destruct (Content_Name_eq_dec c c0).
+     subst; left; exists c1; simpl; auto.
+     right; intros C H; destruct H as [H | H].
+      inversion H; elim n1; now auto.
+      apply n with C; now auto.
+    right; intros C H; destruct H as [H | H].
+     inversion H; elim n1; now auto.
+     apply n with C; now auto.
+Qed.
+
 
 
 

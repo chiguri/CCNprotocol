@@ -18,6 +18,15 @@ elim H; auto.
 Qed.
 
 
+Lemma option_Some_Not_None :
+  forall (A : Type) (x : option A) (a : A), x = Some a -> x <> None.
+intros.
+intro.
+subst; discriminate.
+Qed.
+
+
+
 Section Sum_eq.
 
 Context {A : Type}.

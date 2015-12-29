@@ -10,7 +10,7 @@ Require CCNTopology.
 Require CCNProtocol.
 
 
-Module Type CCN_Content_Managements.
+Module Type CCN_Content_Management.
 
 Declare Module Topology : CCNTopology.CCN_Network.
 Module OldProtocol := CCNProtocol.CCN_Protocol Topology.
@@ -37,5 +37,5 @@ Definition CMF_reply_consistency (v : Node) (c : Content_Name) (es : list Event)
 Parameter CMF_consistency :
   forall (v : Node) (c : Content_Name) (es es' : list Event), CMF_reply_consistency v c (es' ++ es) -> CMF v c es = None -> (forall C : Content c, ~In (StoreData v c C) es') -> CMF v c (es' ++ es) = None.
 
-End CCN_Content_Managements.
+End CCN_Content_Management.
 

@@ -10,7 +10,7 @@ Require CCNProtocol.
 Require CCNContentManagement.
 Require Import CCNSimpleNetwork.
 
-Module CCN_SimpleNetworkFIFO <: CCNContentManagement.CCN_Content_Managements.
+Module CCN_SimpleNetworkFIFO <: CCNContentManagement.CCN_Content_Management.
 
 Module Topology := CCN_SimpleNetwork.
 Import Topology.

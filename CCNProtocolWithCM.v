@@ -9,7 +9,7 @@ Require CCNTopology.
 Require CCNContentManagement.
 
 
-Module CCN_Protocol_CM (N : CCNContentManagement.CCN_Content_Managements).
+Module CCN_Protocol_CM (N : CCNContentManagement.CCN_Content_Management).
 Import N.
 Export OldProtocol.
 Import Topology.
