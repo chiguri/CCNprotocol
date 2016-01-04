@@ -93,9 +93,9 @@ Qed.
 End CCN_SimpleNetworkFIFO.
 
 
-(*
-Module CCN_SimpleNetwork_Verification := CCNVerification.CCN_Protocol_Verification CCN_SimpleNetwork.
+Require CCNVerificationWithCM.
+
+Module CCN_SimpleNetwork_Verification := CCNVerificationWithCM.CCN_Protocol_Verification_CM CCN_SimpleNetworkFIFO.
 Import CCN_SimpleNetwork_Verification.
-*)
 
 
