@@ -39,9 +39,7 @@ Parameter InitCS : Node -> Content_Name -> Prop.
 Parameter InitCS_dec : forall (v : Node) (c : Content_Name), {InitCS v c} + {~ InitCS v c}.
 
 (** Initial Content Server can produce Content data *)
-(* 初期のCSならばデータが作れる *)
 Parameter InitContent_Data : forall (v : Node) (c : Content_Name), InitCS v c -> Content c.
-(* Content cの要素は一致するか否か：だませるから一致しない？（Hashをだます必要があるが） *)
 
 (** FIB for node and content names pointing nodes for interest packets forwarding *)
 Parameter FIB_list : Node -> Content_Name -> list Node.
