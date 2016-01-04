@@ -134,4 +134,22 @@ intros; induction l1.
 Qed.
 
 
+Lemma app_split : forall (A : Type) (l1 l2 l1' l2' : list A),
+ l1 ++ l2 = l1' ++ l2' ->
+  (exists (l : list A), l1' = l1 ++ l /\ l2 = l ++ l2') \/ (exists (l : list A), l1 = l1' ++ l /\ l2' = l ++ l2).
+induction l1; intros; simpl in *.
+ left; exists l1'; now auto.
+ destruct l1'; simpl in *.
+  right; exists (a :: l1); simpl; now auto.
+  inversion H; subst.
+   destruct IHl1 with l2 l1' l2'; auto.
+    destruct H0.
+     destruct H0.
+      left; exists x; subst; now auto.
+    destruct H0.
+     destruct H0.
+      right; exists x; subst; now auto.
+Qed.
+
+
 End List.
