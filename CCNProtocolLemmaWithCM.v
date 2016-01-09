@@ -476,8 +476,6 @@ intros; induction H; auto.
      intros ? Hn; destruct Hn as [Hn | [Hn | Hn]]; inversion Hn; subst.
       elim n; now auto.
 Qed.
-   
-
 
 
 
@@ -1209,9 +1207,9 @@ Lemma StoreData_StoreData_or_DataPacket :
     es = es2 ++ StoreData v2 c C :: ForwardData v2 c :: es1 ->
      v1 <> v2 ->
      In v1 (PIT_list v2 c es1) ->
-     CMF v1 c es1 = None ->
+     PIT_list v1 c es1 <> nil ->
      (exists C' : Content c, In (StoreData v1 c C') es2) \/ (exists C' : Content c, In (Data v2 v1 c C') ps).
-intros vs vt c' C' es ps H; induction H; intros es1 es2 Heq Hneq HIn Hnone.
+intros vs vt c' C' es ps H; induction H; intros es1 es2 Heq Hneq HIn Hnnil.
 +destruct es2; simpl in Heq; now inversion Heq.
 +destruct es2; simpl in Heq; inversion Heq; clear Heq; subst.
  destruct IHCCNprotocol with es1 es2 as [[C0 HI] | [C0 HI]]; auto.
@@ -1276,23 +1274,22 @@ intros vs vt c' C' es ps H; induction H; intros es1 es2 Heq Hneq HIn Hnone.
   apply in_app_or in HI; simpl in *; destruct HI as [HI | [HI | HI]].
    right; exists C0; apply in_or_app; now eauto.
    inversion HI; subst.
+    clear H6 HI.
     assert (exists C'' : Content c', In (StoreData vs c' C'') (es2 ++ [StoreData vt c' C'; ForwardData vt c'])).
     {
      destruct in_dec_storedata with vs c' (es2 ++ [StoreData vt c' C'; ForwardData vt c']).
       now auto.
-      assert (CMF vs c' ((es2 ++ [StoreData vt c' C'; ForwardData vt c']) ++ es1) = None).
-       apply CMF_consistency.
-        rewrite <- app_assoc; simpl; eapply CCN_reply_consistency.
-         now eauto.
-        now eauto.
-        now auto.
-      elim H0; rewrite <- app_assoc in H1; simpl in H1; now auto.
+      destruct PIT_list_no_StoreData_append with (es2 ++ StoreData vt c' C' :: ForwardData vt c' :: es1) (ps1 ++ Data vt vs c' C :: ps2) (es2 ++ [StoreData vt c' C'; ForwardData vt c']) es1 vs c'; simpl; auto.
+       rewrite <- app_assoc; simpl; now auto.
+       rewrite H1 in H2.
+       elim Hnnil.
+       destruct x; simpl in H2; inversion H2; now auto.
     }
-    destruct H1 as [C'' H1].
-     apply in_app_or in H1; destruct H1 as [H1 | [H1 | H1]].
+    destruct H2 as [C'' H2].
+     apply in_app_or in H2; destruct H2 as [H2 | [H2 | H2]].
       left; eexists; now eauto.
-      inversion H1; elim Hneq; now auto.
-      now inversion H1.
+      inversion H2; elim Hneq; now auto.
+      now inversion H2.
    right; exists C0; apply in_or_app; now eauto.
 Qed.
 
@@ -1438,11 +1435,11 @@ intros vs vt c' es ps H HFIB; induction H; intros esl esr Heq HFIBr HNIn HCMF HN
   eapply IHCCNprotocol; eauto.
    intros C' Hn; apply HNData with C'; apply in_or_app.
     apply in_app_or in Hn; simpl in Hn; intuition.
-    inversion H2; subst.
-    elim H0.
+    inversion H3; subst.
+    destruct ForwardInterest_PIT_list_not_nil with vs c' esl esr (ps1 ++ Data vt vs c' C :: ps2); auto.
     apply CMF_consistency; auto.
     apply CCN_reply_consistency with (ps1 ++ Data vt vs c' C :: ps2); now auto.
-  apply in_app_or in H1; apply in_or_app; simpl in H1; intuition.
+  apply in_app_or in H2; apply in_or_app; simpl in H2; intuition.
    now inversion H1.
 Qed.
 

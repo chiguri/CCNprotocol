@@ -68,7 +68,7 @@ intros v1 v2 c es ps H; revert v1 v2 c; unfold Connected; induction H; simpl; in
        inversion H4.
    apply in_app_or in H3; apply in_or_app; destruct H3; simpl...
 +apply IHCCNprotocol with (c0 := c0).
-  apply in_app_or in H2; apply in_or_app; destruct H2; simpl...
+  apply in_app_or in H3; apply in_or_app; destruct H3; simpl...
 Qed.
 
 
@@ -181,7 +181,7 @@ intros v1 v2 c C es ps H; revert v1 v2 c C; unfold Connected; induction H; simpl
   apply IHCCNprotocol with (c0 := c0) (C0 := C0).
    apply in_or_app; simpl; apply in_app_or in H3; destruct H3...
 +apply IHCCNprotocol with (c0 := c0) (C0 := C0).
-  apply in_or_app; simpl; apply in_app_or in H2; destruct H2...
+  apply in_or_app; simpl; apply in_app_or in H3; destruct H3...
 Qed.
 
 
@@ -252,9 +252,11 @@ intros v c es ps H; revert es ps; induction H; intros.
             destruct PIT_list_no_StoreData_append with (esr ++ ForwardInterest v1 c :: es) x0 esr (ForwardInterest v1 c :: es) v2 c; auto.
              intros C'' Hn; apply IH with C''; simpl; now auto.
              rewrite H10; apply in_or_app; now auto.
-            apply CMF_consistency.
-             eapply CCN_reply_consistency; now eauto.
-             now auto.
+            apply ForwardInterest_PIT_list_not_nil with x0; auto.
+             apply CMF_consistency.
+              eapply CCN_reply_consistency; now eauto.
+              now auto.
+              intros C'' Hn; apply n0 with C''; apply in_or_app; simpl; now auto.
              intros C'' Hn; apply n0 with C''; apply in_or_app; simpl; now auto.
             destruct H10.
              elim n0 with x1; apply in_or_app; now auto.
@@ -288,8 +290,10 @@ intros v c es ps H; revert es ps; induction H; intros.
            destruct PIT_list_no_StoreData_append with (esr' ++ ForwardInterest v1 c :: es) x1 esr' (ForwardInterest v1 c :: es) v2 c; auto.
             intros C'' Hn; apply HNIn with C''; simpl; now auto.
             rewrite H10; apply in_or_app; now auto.
-           apply CMF_consistency; auto.
-            apply CCN_reply_consistency with x1; now auto.
+           apply ForwardInterest_PIT_list_not_nil with x1; auto.
+            apply CMF_consistency; auto.
+             apply CCN_reply_consistency with x1; now auto.
+             intros C'' Hn; rewrite Heq' in n2; apply n2 with C''; apply in_or_app; simpl; now auto.
             intros C'' Hn; rewrite Heq' in n2; apply n2 with C''; apply in_or_app; simpl; now auto.
            destruct H10 as [C'' H10].
             elim n2 with C''; rewrite Heq'; apply in_or_app; simpl; now auto.
@@ -367,9 +371,16 @@ intros v c es ps H; revert es ps; induction H; intros.
                destruct PIT_list_no_StoreData_append with (esr' ++ es' ++ ForwardInterest v1 c :: es) x1 esr' (es' ++ ForwardInterest v1 c :: es) v2 c; auto.
                 intros C'' Hn; apply HNIn with C''; simpl; now auto.
                 rewrite H10; apply in_or_app; now auto.
-               apply CMF_consistency; auto.
-                apply CCN_reply_consistency with x1; now auto.
-                intros C'' Hn; rewrite app_comm_cons in n3; rewrite Heq' in n3; apply n3 with C''; apply in_or_app; left; apply in_or_app; simpl; now auto.
+               rewrite app_assoc; apply ForwardInterest_PIT_list_not_nil with x1; auto.
+                rewrite <- app_assoc; now auto.
+                apply CMF_consistency; auto.
+                 rewrite <- app_assoc; apply CCN_reply_consistency with x1; now auto.
+                 intros C'' Hn; apply in_app_or in Hn; destruct Hn.
+                  apply n3 with C''; rewrite app_comm_cons; rewrite Heq'; apply in_or_app; now intuition.
+                  apply n0 with C''; now auto.
+                intros C'' Hn; apply in_app_or in Hn; destruct Hn.
+                 apply n3 with C''; rewrite app_comm_cons; rewrite Heq'; apply in_or_app; now intuition.
+                 apply n0 with C''; now auto.
                destruct H10 as [C'' H10].
                 elim n3 with C''; rewrite app_comm_cons; rewrite Heq'; apply in_or_app; left; apply in_or_app; simpl; now auto.
                destruct H10 as [C'' H10].
@@ -503,16 +514,20 @@ intros v c es ps H; revert es ps; induction H; intros.
                   simpl; now auto.
                   elim n5; now auto.
                  elim n5; now auto.
-              apply CMF_consistency.
-               apply CCN_reply_consistency with x0; now auto.
-               assert (CMF v1 c ([ForwardInterest v2 c; AddPIT v2 v1 c] ++ es' ++ ForwardInterest v1 c :: es) = None).
-                apply CMF_consistency; simpl; auto.
-                 apply CCN_reply_consistency with (FIB_Interest v2 c ++ psl ++ psr); now auto.
-                 intros C'' Hn; destruct Hn as [Hn | [Hn | []]]; now inversion Hn.
-                simpl in H11; now auto.
-               destruct esl; simpl in HI; inversion HI; subst.
-                intros C'' Hn; apply n4 with C''; simpl; now auto.
-                intros C'' Hn; apply n4 with C''; right; apply in_or_app; simpl; now auto.
+              assert (esr ++ ForwardInterest v2 c :: AddPIT v2 v1 c :: es' ++ ForwardInterest v1 c :: es = (esr ++ ForwardInterest v2 c :: AddPIT v2 v1 c :: es') ++ ForwardInterest v1 c :: es) by (rewrite <- app_assoc; simpl; now auto).
+              rewrite H11 in *; apply ForwardInterest_PIT_list_not_nil with x0; auto.
+               apply CMF_consistency; auto.
+                eapply CCN_reply_consistency; now eauto.
+                intros C'' Hn; apply in_app_or in Hn; destruct Hn as [Hn | [Hn | [Hn | Hn]]].
+                 apply n4 with C''; rewrite HI; apply in_or_app; simpl; now auto.
+                 now inversion Hn.
+                 now inversion Hn.
+                 apply n0 with C''; now auto.
+               intros C'' Hn; apply in_app_or in Hn; destruct Hn as [Hn | [Hn | [Hn | Hn]]].
+                apply n4 with C''; rewrite HI; apply in_or_app; simpl; now auto.
+                now inversion Hn.
+                now inversion Hn.
+                apply n0 with C''; now auto.
               destruct H11 as [? []].
               destruct H11 as [C'' Hi]; apply in_split in Hi; destruct Hi as [psl' [psr' ?]]; subst.
                exists C'', (ForwardData v1 c :: StoreData v2 c C' :: ForwardData v2 c :: esr ++ [ForwardInterest v2 c; AddPIT v2 v1 c]); eexists.
@@ -651,13 +666,20 @@ intros v c es ps H; revert es ps; induction H; intros.
                   simpl; now auto.
                   elim n6; now auto.
                  elim n6; now auto.
-              apply CMF_consistency.
-               apply CCN_reply_consistency with x0; now auto.
-               rewrite cons_app.
-                apply CMF_consistency; simpl; auto.
-                 apply CCN_reply_consistency with (psl ++ psr); now auto.
-                 intros C'' Hn; destruct Hn as [Hn | []]; now inversion Hn.
-               intros C'' Hn; apply n5 with C''; simpl; now auto.
+              assert (esr ++ AddPIT v2 v1 c :: es' ++ ForwardInterest v1 c :: es = (esr ++ AddPIT v2 v1 c :: es') ++ ForwardInterest v1 c :: es) by (rewrite <- app_assoc; simpl; now auto).
+              rewrite H11; apply ForwardInterest_PIT_list_not_nil with x0; auto.
+               rewrite <- H11; now auto.
+               apply CMF_consistency.
+                rewrite <- H11; apply CCN_reply_consistency with x0; now auto.
+                now auto.
+                intros C'' Hn; apply in_app_or in Hn; destruct Hn as [Hn | [Hn | Hn]].
+                 apply n5 with C''; simpl; now auto.
+                 now inversion Hn.
+                 apply n0 with C''; now auto.
+               intros C'' Hn; apply in_app_or in Hn; destruct Hn as [Hn | [Hn | Hn]].
+                apply n5 with C''; simpl; now auto.
+                now inversion Hn.
+                apply n0 with C''; now auto.
               destruct H11 as [? []].
               destruct H11 as [C'' Hi]; apply in_split in Hi; destruct Hi as [psl' [psr' ?]]; subst.
                exists C'', (ForwardData v1 c :: StoreData v2 c C' :: ForwardData v2 c :: esr ++ [AddPIT v2 v1 c]); eexists.

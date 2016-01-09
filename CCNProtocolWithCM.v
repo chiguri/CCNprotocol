@@ -131,7 +131,8 @@ Inductive CCNprotocol : list Event -> list Packet -> Prop :=
     CCNprotocol (StoreData v' c C :: ForwardData v' c :: es) ps'
 | ccn_drop_data : forall (v v' : Node) (c : Content_Name) (C : Content c) (es : list Event) (ps1 ps2 ps' : list Packet),
    CCNprotocol es (ps1 ++ Data v v' c C :: ps2) ->
-    CMF v' c es <> None ->
+    In_Request v' c es = false ->
+    PIT_list v' c es = nil ->
     ps' = ps1 ++ ps2 ->
     CCNprotocol es ps'.
 
