@@ -740,6 +740,178 @@ Qed.
 
 
 
+Lemma Request_In_Request :
+ forall (v : Node) (c : Content_Name) (es1 es2 : list Event) (ps : list Packet),
+  CCNprotocol (es1 ++ Request v c :: es2) ps ->
+   (forall (C : Content c), ~In (StoreData v c C) es1) ->
+   In_Request v c (es1 ++ Request v c :: es2) = true.
+Proof with eauto.
+intros v c es1 es2; remember (es1 ++ Request v c :: es2).
+intros ps H; revert v c es1 es2 Heql; induction H; intros; simpl.
++destruct es1; now inversion Heql.
++destruct es1; simpl in Heql; inversion Heql; clear Heql; subst.
+  destruct Node_eq_dec.
+   destruct Content_Name_eq_dec.
+    now auto.
+    elim n; now auto.
+   elim n; now auto.
+  destruct Node_eq_dec.
+   destruct Content_Name_eq_dec.
+    now auto.
+    subst; eapply IHCCNprotocol.
+     now eauto.
+     intros C Hn; apply H2 with C; simpl; now auto.
+   eapply IHCCNprotocol.
+    now eauto.
+    intros C Hn; apply H2 with C; simpl; now auto.
++destruct es1; inversion Heql; clear Heql; subst.
+ destruct es1; inversion H7; clear H7; subst.
+ eapply IHCCNprotocol.
+  now eauto.
+  intros C Hn; apply H4 with C; simpl; now auto.
++destruct es1; inversion Heql; clear Heql; subst.
+ eapply IHCCNprotocol.
+  now eauto.
+  intros C Hn; apply H5 with C; simpl; now auto.
++now eauto.
++now eauto.
++destruct es1; inversion Heql; clear Heql; subst.
+ eapply IHCCNprotocol.
+  now eauto.
+  intros C' Hn; apply H2 with C'; simpl; now auto.
++destruct es1; inversion Heql; clear Heql; subst.
+ destruct Node_eq_dec.
+  destruct Content_Name_eq_dec.
+   subst; elim H4 with C; simpl; now auto.
+   eapply IHCCNprotocol.
+    now eauto.
+    intros C' Hn; apply H4 with C'; simpl; now auto.
+  eapply IHCCNprotocol.
+   now eauto.
+   intros C' Hn; apply H4 with C'; simpl; now auto.
++destruct es1; inversion Heql; clear Heql; subst.
+ destruct es1; inversion H7; clear H7; subst.
+ destruct Node_eq_dec.
+  destruct Content_Name_eq_dec.
+   subst; elim H4 with C; simpl; now auto.
+   eapply IHCCNprotocol.
+    now eauto.
+    intros C' Hn; apply H4 with C'; simpl; now auto.
+  eapply IHCCNprotocol.
+   now eauto.
+   intros C' Hn; apply H4 with C'; simpl; now auto.
++destruct es1; inversion Heql; clear Heql; subst.
+ destruct es1; inversion H7; clear H7; subst.
+ destruct Node_eq_dec.
+  destruct Content_Name_eq_dec.
+   subst; elim H4 with C; simpl; now auto.
+   eapply IHCCNprotocol.
+    now eauto.
+    intros C' Hn; apply H4 with C'; simpl; now auto.
+  eapply IHCCNprotocol.
+   now eauto.
+   intros C' Hn; apply H4 with C'; simpl; now auto.
++now eauto.
+Qed.
+
+
+Lemma In_Request_No_StoreData :
+ forall (v : Node) (c : Content_Name) (es1 es2 : list Event) (ps : list Packet),
+  CCNprotocol (es1 ++ es2) ps ->
+   In_Request v c es2 = true ->
+   (forall (C : Content c), ~In (StoreData v c C) es1) ->
+   In_Request v c (es1 ++ es2) = true.
+intros v c es1 es2; remember (es1 ++ es2).
+intros ps H; revert es1 es2 Heql; induction H; intros; simpl.
++destruct es1; destruct es2; inversion Heql; simpl in H; now inversion H.
++destruct Node_eq_dec.
+  destruct Content_Name_eq_dec; subst.
+   now auto.
+   destruct es1; inversion Heql; simpl in *; subst.
+    simpl in H2.
+     destruct Node_eq_dec with v0 v0.
+      destruct Content_Name_eq_dec with c c0.
+       elim n; now auto.
+       now auto.
+      elim n0; now auto.
+    eapply IHCCNprotocol.
+     reflexivity.
+     now auto.
+     intros C Hn; apply H3 with C; now auto.
+  destruct es1; inversion Heql; simpl in *; subst.
+   simpl in H2.
+    destruct Node_eq_dec with v v0.
+     elim n; now auto.
+     now auto.
+   eapply IHCCNprotocol.
+    reflexivity.
+    now auto.
+    intros C Hn; apply H3 with C; now auto.
++destruct es1; inversion Heql; simpl in *; clear Heql; subst.
+  simpl in H4; now auto.
+  destruct es1; inversion H8; simpl in *; clear H8; subst.
+   simpl in H4; now auto.
+   apply IHCCNprotocol with es1 es2; auto.
+   intros C Hn; apply H5 with C; now auto.
++destruct es1; inversion Heql; simpl in *; clear Heql; subst.
+  simpl in H5; now auto.
+  apply IHCCNprotocol with es1 es2; auto.
+  intros C Hn; apply H6 with C; now auto.
++now eauto.
++now eauto.
++destruct es1; simpl in *; inversion Heql; clear Heql; subst.
+  simpl in H2; now auto.
+  apply IHCCNprotocol with es1 es2; auto.
+  intros C' Hn; apply H3 with C'; now auto.
++destruct es1; simpl in *; inversion Heql; clear Heql; subst.
+  simpl in H4.
+   now auto.
+  destruct Node_eq_dec.
+   destruct Content_Name_eq_dec; subst.
+    elim H5 with C; now auto.
+    apply IHCCNprotocol with es1 es2; auto.
+     intros C' Hn; apply H5 with C'; now auto.
+   apply IHCCNprotocol with es1 es2; auto.
+    intros C' Hn; apply H5 with C'; now auto.
++destruct es1; simpl in *; inversion Heql; clear Heql; subst.
+  simpl in H4; now auto.
+  destruct es1; simpl in *; inversion H8; clear H8; subst.
+   simpl in H4.
+    destruct Node_eq_dec.
+     destruct Content_Name_eq_dec; subst.
+      elim H5 with C; now auto.
+      now auto.
+     now auto.
+    destruct Node_eq_dec.
+     destruct Content_Name_eq_dec; subst.
+      elim H5 with C; now auto.
+      apply IHCCNprotocol with es1 es2; auto.
+       intros C' Hn; apply H5 with C'; now auto.
+     apply IHCCNprotocol with es1 es2; auto.
+      intros C' Hn; apply H5 with C'; now auto.
++destruct es1; simpl in *; inversion Heql; clear Heql; subst.
+  simpl in H4; now auto.
+  destruct es1; simpl in *; inversion H8; clear H8; subst.
+   simpl in H4.
+    destruct Node_eq_dec.
+     destruct Content_Name_eq_dec; subst.
+      elim H5 with C; now auto.
+      now auto.
+     now auto.
+    destruct Node_eq_dec.
+     destruct Content_Name_eq_dec; subst.
+      elim H5 with C; now auto.
+      apply IHCCNprotocol with es1 es2; auto.
+       intros C' Hn; apply H5 with C'; now auto.
+     apply IHCCNprotocol with es1 es2; auto.
+      intros C' Hn; apply H5 with C'; now auto.
++now eauto.
+Qed.
+
+
+
+
+
 (** If a node is in PIT entries of another's, there should be an event adding the node to PIT *)
 Lemma In_PIT_list_In_AddPIT :
  forall (v1 v2 : Node) (c : Content_Name) (es : list Event),
@@ -1207,7 +1379,7 @@ Lemma StoreData_StoreData_or_DataPacket :
     es = es2 ++ StoreData v2 c C :: ForwardData v2 c :: es1 ->
      v1 <> v2 ->
      In v1 (PIT_list v2 c es1) ->
-     PIT_list v1 c es1 <> nil ->
+     In_Request v1 c es1 = true \/ PIT_list v1 c es1 <> nil ->
      (exists C' : Content c, In (StoreData v1 c C') es2) \/ (exists C' : Content c, In (Data v2 v1 c C') ps).
 intros vs vt c' C' es ps H; induction H; intros es1 es2 Heq Hneq HIn Hnnil.
 +destruct es2; simpl in Heq; now inversion Heq.
@@ -1279,11 +1451,15 @@ intros vs vt c' C' es ps H; induction H; intros es1 es2 Heq Hneq HIn Hnnil.
     {
      destruct in_dec_storedata with vs c' (es2 ++ [StoreData vt c' C'; ForwardData vt c']).
       now auto.
-      destruct PIT_list_no_StoreData_append with (es2 ++ StoreData vt c' C' :: ForwardData vt c' :: es1) (ps1 ++ Data vt vs c' C :: ps2) (es2 ++ [StoreData vt c' C'; ForwardData vt c']) es1 vs c'; simpl; auto.
-       rewrite <- app_assoc; simpl; now auto.
-       rewrite H1 in H2.
-       elim Hnnil.
-       destruct x; simpl in H2; inversion H2; now auto.
+      destruct Hnnil as [Hreq | Hnnil].
+       assert (In_Request vs c' ((es2 ++ [StoreData vt c' C'; ForwardData vt c']) ++ es1) = true).
+        apply In_Request_No_StoreData with (ps1 ++ Data vt vs c' C :: ps2); try (rewrite <- app_assoc); simpl; now auto.
+        rewrite <- app_assoc in H2; simpl in H2; rewrite H2 in H0; now inversion H0.
+       destruct PIT_list_no_StoreData_append with (es2 ++ StoreData vt c' C' :: ForwardData vt c' :: es1) (ps1 ++ Data vt vs c' C :: ps2) (es2 ++ [StoreData vt c' C'; ForwardData vt c']) es1 vs c'; simpl; auto.
+        rewrite <- app_assoc; simpl; now auto.
+        rewrite H1 in H2.
+        elim Hnnil.
+        destruct x; simpl in H2; inversion H2; now auto.
     }
     destruct H2 as [C'' H2].
      apply in_app_or in H2; destruct H2 as [H2 | [H2 | H2]].
@@ -1292,6 +1468,157 @@ intros vs vt c' C' es ps H; induction H; intros es1 es2 Heq Hneq HIn Hnnil.
       now inversion H2.
    right; exists C0; apply in_or_app; now eauto.
 Qed.
+
+
+
+
+Lemma Request_Not_PIT_Data_StoreData_Interest :
+ forall (v1 v2 : Node) (c : Content_Name) (es : list Event) (ps : list Packet),
+  CCNprotocol es ps ->
+   In v2 (Connected_list v1) ->
+   forall (es1 es2 : list Event),
+    es = es1 ++ Request v1 c :: es2 ->
+     FIBreachable v2 c ->
+     ~ In v1 (PIT_list v2 c es) ->
+     (forall C : Content c, ~ In (Data v2 v1 c C) ps) ->
+     (forall C : Content c, ~ In (StoreData v1 c C) es1) ->
+     In (Interest v1 v2 c) ps.
+intros vs vt c' es ps H HCon; induction H; intros esl esr Heq HFIBr HNIn HNData HNStore.
++destruct esl; simpl in Heq; now inversion Heq.
++destruct esl; simpl in Heq; inversion Heq; subst.
+  apply in_or_app; left.
+   unfold Broadcast_Interest.
+    apply in_split in HCon; destruct HCon as [f1 [f2 HCon]]; rewrite HCon.
+    rewrite map_app; simpl.
+    apply in_or_app; simpl; now auto.
+  apply in_or_app; right.
+   eapply IHCCNprotocol; eauto.
+    intros C Hn; apply HNData with C; apply in_or_app; simpl; now auto.
+    intros C Hn; apply HNStore with C; simpl; now auto.
++destruct esl; simpl in Heq; inversion Heq; subst.
+  destruct esl; simpl in H6; inversion H6; subst.
+   assert (In (Interest vs vt c') (ps1 ++ Interest v v' c :: ps2)).
+    eapply IHCCNprotocol; eauto.
+     intro Hn; apply HNIn; simpl.
+      destruct Node_eq_dec with vt v'; destruct Content_Name_eq_dec with c' c; simpl; now auto.
+     intros C Hn; apply HNData with C; apply in_or_app; right.
+      apply in_app_or in Hn; simpl in Hn; now intuition.
+     intros C Hn; apply HNStore with C; simpl; now auto.
+   apply in_app_or in H3; destruct H3 as [H3 | [H3 | H3]]; intuition.
+    inversion H3; subst.
+    simpl in HNIn.
+    destruct Node_eq_dec with vt vt.
+     destruct Content_Name_eq_dec with c' c'.
+      elim HNIn; simpl; now auto.
+      elim n; now auto.
+     elim n; now auto.
++destruct esl; simpl in Heq; inversion Heq; clear Heq; subst.
+  assert (In (Interest vs vt c') (ps1 ++ Interest v v' c :: ps2)).
+   eapply IHCCNprotocol; eauto.
+    intro Hn; apply HNIn; simpl.
+     destruct Node_eq_dec with vt v'; destruct Content_Name_eq_dec with c' c; simpl; now auto.
+    intros C Hn; apply HNData with C; apply in_or_app.
+     apply in_app_or in Hn; simpl in Hn; now intuition.
+    intros C Hn; apply HNStore with C; simpl; now auto.
+  apply in_app_or in H4; destruct H4 as [H4 | [H4 | H4]]; intuition.
+   inversion H4; subst.
+   simpl in HNIn.
+   destruct Node_eq_dec with vt vt.
+    destruct Content_Name_eq_dec with c' c'.
+     elim HNIn; simpl; now auto.
+     elim n; now auto.
+    elim n; now auto.
++subst; assert (In (Interest vs vt c') (ps1 ++ Interest v v' c :: ps2)).
+  eapply IHCCNprotocol; eauto.
+   intros C Hn; apply HNData with C; apply in_or_app.
+    apply in_app_or in Hn; simpl in Hn; now intuition.
+   apply in_app_or in H2; destruct H2 as [H2 | [H2 | H2]]; intuition.
+    inversion H2; subst.
+    destruct HFIBr.
+     destruct CMF_keep_InitCS with v c (esl ++ Request vs c :: esr); auto.
+      rewrite H0 in H4; now inversion H4.
+     unfold FIB in H3.
+      rewrite H1 in H3; simpl in H3; now inversion H3.
++subst; assert (In (Interest vs vt c') (ps1 ++ Interest v v' c :: ps2)).
+  eapply IHCCNprotocol; eauto.
+   intros C Hn; apply HNData with C; apply in_or_app.
+    apply in_app_or in Hn; simpl in Hn; now intuition.
+   apply in_app_or in H2; destruct H2 as [H2 | [H2 | H2]]; intuition.
+    inversion H2; subst.
+    elim HNIn; now auto.
++destruct esl; simpl in Heq; inversion Heq; clear Heq; subst.
+  assert (In (Interest vs vt c') (ps1 ++ Interest v v' c :: ps2)).
+   eapply IHCCNprotocol; eauto.
+    intros C' Hn; apply HNData with C'; right; apply in_or_app; apply in_app_or in Hn; simpl in Hn; intuition.
+     now inversion H2.
+    intros C' Hn; apply HNStore with C'; simpl; now auto.
+    right; apply in_app_or in H1; apply in_or_app; simpl in H1; intuition.
+     inversion H1; subst.
+     elim HNData with C; simpl; now auto.
++destruct esl; simpl in Heq; inversion Heq; clear Heq; subst.
+  assert (In (Interest vs vt c') (ps1 ++ Data v v' c C :: ps2)).
+   eapply IHCCNprotocol; eauto.
+    intros C' Hn; apply HNData with C'; apply in_or_app; simpl; apply in_app_or in Hn; simpl in Hn; intuition.
+     inversion H4; subst.
+     elim HNStore with C; simpl; now auto.
+    intros C' Hn; apply HNStore with C'; simpl; now auto.
+    apply in_app_or in H3; apply in_or_app; simpl in H3; intuition.
+     now inversion H3.
++destruct esl; simpl in Heq; inversion Heq; clear Heq; subst.
+ destruct esl; simpl in H6; inversion H6; clear H6; subst.
+  assert (In (Interest vs vt c') (ps1 ++ Data v v' c C :: ps2)).
+   eapply IHCCNprotocol; eauto.
+    simpl in HNIn.
+     destruct Node_eq_dec with vt v'.
+      destruct Content_Name_eq_dec; subst.
+       intro Hn.
+        apply HNData with C.
+        apply in_or_app; left.
+        unfold PIT_Data.
+        apply in_split in Hn; destruct Hn as [es' [es'' Hn]]; rewrite Hn.
+        rewrite map_app; simpl.
+        apply in_or_app; simpl; now auto.
+       now auto.
+      now auto.
+    intros C' Hn; apply HNData with C'; apply in_or_app; simpl; apply in_app_or in Hn; simpl in Hn; intuition.
+     inversion H4; subst.
+     elim HNStore with C; simpl; now auto.
+    intros C' Hn; apply HNStore with C'; simpl; now auto.
+    apply in_app_or in H3; apply in_or_app; simpl in H3; intuition.
+     now inversion H3.
++destruct esl; simpl in Heq; inversion Heq; clear Heq; subst.
+ destruct esl; simpl in H6; inversion H6; clear H6; subst.
+  assert (In (Interest vs vt c') (ps1 ++ Data v v' c C :: ps2)).
+   eapply IHCCNprotocol; eauto.
+    simpl in HNIn.
+     destruct Node_eq_dec with vt v'.
+      destruct Content_Name_eq_dec; subst.
+       intro Hn.
+        apply HNData with C.
+        apply in_or_app; left.
+        unfold PIT_Data.
+        apply in_split in Hn; destruct Hn as [es' [es'' Hn]]; rewrite Hn.
+        rewrite map_app; simpl.
+        apply in_or_app; simpl; now auto.
+       now auto.
+      now auto.
+    intros C' Hn; apply HNData with C'; apply in_or_app; simpl; apply in_app_or in Hn; simpl in Hn; intuition.
+     inversion H4; subst.
+     elim HNStore with C; simpl; now auto.
+    intros C' Hn; apply HNStore with C'; simpl; now auto.
+    apply in_app_or in H3; apply in_or_app; simpl in H3; intuition.
+     now inversion H3.
++subst; assert (In (Interest vs vt c') (ps1 ++ Data v v' c C :: ps2)).
+  eapply IHCCNprotocol; eauto.
+   intros C' Hn; apply HNData with C'; apply in_or_app.
+    apply in_app_or in Hn; simpl in Hn; intuition.
+    inversion H3; subst.
+    rewrite Request_In_Request with _ _ _ _ (ps1 ++ Data vt vs c' C :: ps2) in H0; auto.
+    now inversion H0.
+  apply in_app_or in H2; apply in_or_app; simpl in H2; intuition.
+   now inversion H1.
+Qed.
+
 
 
 
