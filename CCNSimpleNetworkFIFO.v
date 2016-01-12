@@ -62,14 +62,14 @@ destruct InitCS_dec with v c.
 Qed.
 
 
-Definition CMF_reply_consistency (v : Node) (c : Content_Name) (es : list Event) :=
-  forall (es1 es2 : list Event),
+Definition CMF_reply_consistency (v : Node) (es : list Event) :=
+  forall (c : Content_Name) (es1 es2 : list Event),
    es = es1 ++ ReplyData v c :: es2 -> CMF v c es2 <> None.
 
 
 (** If once the node seems not to have requested contents, it will not have until it will receive and store the contents. *)
 Lemma CMF_consistency :
-  forall (v : Node) (c : Content_Name) (es es' : list Event), CMF_reply_consistency v c (es' ++ es) -> CMF v c es = None -> (forall C : Content c, ~In (StoreData v c C) es') -> CMF v c (es' ++ es) = None.
+  forall (v : Node) (c : Content_Name) (es es' : list Event), CMF_reply_consistency v (es' ++ es) -> CMF v c es = None -> (forall C : Content c, ~In (StoreData v c C) es') -> CMF v c (es' ++ es) = None.
 intros v c es es' _ H H0.
 unfold CMF in *.
 destruct InitCS_dec with v c.
