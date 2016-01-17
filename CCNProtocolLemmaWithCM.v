@@ -31,24 +31,24 @@ rewrite H1 in H; discriminate.
 Qed.
 
 Lemma CMF_reply_consistency_app :
- forall (v : Node) (es es' : list Event),
-  CMF_reply_consistency v es ->
-   (forall (c : Content_Name), ~In (ReplyData v c) es') ->
-   CMF_reply_consistency v (es' ++ es).
+ forall (es es' : list Event),
+  CMF_reply_consistency es ->
+   (forall (v : Node) (c : Content_Name), ~In (ReplyData v c) es') ->
+   CMF_reply_consistency (es' ++ es).
 intros; induction es'; simpl in *.
  now auto.
  unfold CMF_reply_consistency in *; intros.
  destruct es1; simpl in *.
-  inversion H1; elim H0 with c; now auto.
+  inversion H1; elim H0 with v c; now auto.
   inversion H1; subst; clear H1.
    eapply IHes'; eauto.
-   intros c' Hn; apply H0 with c'; now auto.
+   intros v' c' Hn; apply H0 with v' c'; now auto.
 Qed.
 
 Lemma CMF_reply_consistency_split :
- forall (v : Node) (es es' : list Event),
-  CMF_reply_consistency v (es' ++ es) ->
-   CMF_reply_consistency v es.
+ forall (es es' : list Event),
+  CMF_reply_consistency (es' ++ es) ->
+   CMF_reply_consistency es.
 intros; unfold CMF_reply_consistency in *; intros.
 subst.
 apply H with (es' ++ es1).
@@ -59,10 +59,10 @@ Qed.
 
 Lemma CCN_reply_consistency :
   forall (es : list Event) (ps : list Packet),
-    CCNprotocol es ps -> forall (v : Node), CMF_reply_consistency v es.
+    CCNprotocol es ps -> CMF_reply_consistency es.
 intros.
 unfold CMF_reply_consistency.
-intro c; induction H; intros es1 es2 Heq; destruct es1; simpl in Heq; inversion Heq; subst; eauto.
+intros v c; induction H; intros es1 es2 Heq; destruct es1; simpl in Heq; inversion Heq; subst; eauto.
 +destruct es1; simpl in Heq; inversion Heq; subst; eauto.
 +apply IHCCNprotocol with [].
  simpl; now auto.
@@ -355,7 +355,7 @@ intros; induction H; auto.
     elim H0; now auto.
     apply CMF_reply_consistency_app.
      eapply CCN_reply_consistency; now eauto.
-     intros c' Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+     intros v' c' Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
     now auto.
     intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
 +case_eq (CMF v c es); intros.
@@ -367,7 +367,7 @@ intros; induction H; auto.
     elim H0; now auto.
     apply CMF_reply_consistency_app.
      eapply CCN_reply_consistency; now eauto.
-     intros c' Hn; destruct Hn as [Hn | [Hn | Hn]]; now inversion Hn.
+     intros v'' c' Hn; destruct Hn as [Hn | [Hn | Hn]]; now inversion Hn.
     now auto.
     intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
 +case_eq (CMF v c es); intros.
@@ -379,7 +379,7 @@ intros; induction H; auto.
     elim H0; now auto.
     apply CMF_reply_consistency_app.
      eapply CCN_reply_consistency; now eauto.
-     intros c' Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
+     intros v'' c' Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
     now auto.
     intros C Hn; destruct Hn as [Hn | Hn]; now inversion Hn.
 +case_eq (CMF v c es); intros.
@@ -628,7 +628,7 @@ Lemma CMF_app_In_Store_Data :
  forall (v : Node) (c : Content_Name) (es1 es2 : list Event),
   CMF v c es2 = None ->
    CMF v c (es1 ++ es2) <> None ->
-   CMF_reply_consistency v (es1 ++ es2) ->
+   CMF_reply_consistency (es1 ++ es2) ->
    exists (C : Content c),
     In (StoreData v c C) es1.
 Proof with eauto.
