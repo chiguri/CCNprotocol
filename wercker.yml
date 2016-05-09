@@ -1,0 +1,13 @@
+#box: amutake/ssreflect@0.0.3
+box: amutake/coq@0.0.3
+
+build:
+    steps:
+      - script:
+          name: echo information
+          code: |
+              echo "Coq version :"
+              echo "$(coqc --version)"
+      - script:
+          name: check by make
+          code: make
