@@ -1,6 +1,7 @@
 (* Written by Sosuke Moriguchi (chiguri), Kwansei Gakuin University *)
 
 (** * Network sample : simple network with only 7 nodes (bound) *)
+(** * Content Management sample : R1, R2, R3 and R4 can store only one content, and each of others can store 3 contents which are used most recently in the node *)
 
 
 Require Import List.

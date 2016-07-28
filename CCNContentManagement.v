@@ -29,6 +29,7 @@ Parameter CMF_keep_InitCS :
 Parameter CMF_not_create_content :
   forall (v : Node) (c : Content_Name), ~InitCS v c -> CMF v c [] = None.
 
+(** If a node reply with data, the node should have the data at that time. *)
 Definition CMF_reply_consistency (es : list Event) :=
   forall (v : Node) (c : Content_Name) (es1 es2 : list Event),
    es = es1 ++ ReplyData v c :: es2 -> CMF v c es2 <> None.

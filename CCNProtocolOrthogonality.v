@@ -3,7 +3,7 @@
 (** * Functor from Network Topology to specifications/proofs about extracting all Events and Packets about the specific Content_Name.
 
       This guarantees that each event does not use shared resource in this settings.
-      (Be careful that if we add limits of ContentStores, we cannot prove this since other contents change the state of ContentStores.)
+      (Be careful that if we add limits of ContentStores, this is not valid since other contents change the state of ContentStores.)
  *)
 
 

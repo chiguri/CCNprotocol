@@ -1,6 +1,6 @@
 (* Written by Sosuke Moriguchi (chiguri), Kwansei Gakuin University *)
 
-(** * Lemmas for verification of the protocol *)
+(** * Lemmas for verification of the protocol with content management *)
 
 Require Import List.
 Import ListNotations.
