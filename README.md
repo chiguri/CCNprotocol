@@ -43,4 +43,5 @@ The BSD 3-Clause License
 ## Papers
 
 * Sosuke Moriguchi, Takashi Morishima, Mizuki Goto, Kazuko Takahashi, "Formalization of the Behavior of Content-Centric Networking", The 10th International Conference on Future Networks and Communications, Aug., 2015. (See [Release/Tag "FNC15"](https://github.com/chiguri/CCNprotocol/releases/tag/FNC15) and [the paper (Elsevior, open access)](http://www.sciencedirect.com/science/article/pii/S1877050915016786))
+* Sosuke Moriguchi, Takashi Morishima, Mizuki Goto, Kazuko Takahashi, "Verification of Content-Centric Networking Using Proof Assistant", IEICE TRANSACTIONS on Communications, Vol.E99-B, No.11, pp.2297-2304, Nov., 2016. (See [Release/Tag "IEICE16"](https://github.com/chiguri/CCNprotocol/releases/tag/IEICE16)).
 
