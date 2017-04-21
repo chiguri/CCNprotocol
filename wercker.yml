@@ -1,5 +1,4 @@
-#box: amutake/ssreflect@0.0.3
-box: amutake/coq@0.0.3
+box: chiguri/coq:V8.4
 
 build:
     steps:
