@@ -1,4 +1,4 @@
-box: chiguri/coq:V8.4
+box: chiguri/coq:V8.6
 
 build:
     steps:
