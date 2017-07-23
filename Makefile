@@ -71,7 +71,7 @@ COQDOCLIBS?=\
 
 OPT?=
 COQDEP?="$(COQBIN)coqdep" -c
-COQFLAGS?=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
+COQFLAGS?=-q $(OPT) $(OTHERFLAGS) $(COQ_XML)
 COQCHKFLAGS?=-silent -o
 COQDOCFLAGS?=-interpolate -utf8
 COQC?=$(TIMER) "$(COQBIN)coqc"
