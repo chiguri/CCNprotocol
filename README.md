@@ -3,7 +3,7 @@ CCNprotocol
 
 [![wercker status](https://app.wercker.com/status/d9413c8560fe41a47f573f8d00bf1a64/s "wercker status")](https://app.wercker.com/project/bykey/d9413c8560fe41a47f573f8d00bf1a64)
 
-CCN (Content-Centric Networking) protocol description and verification in Coq (Tested by Coq 8.4 pl6)
+CCN (Content-Centric Networking) protocol description and verification in Coq (Tested by Coq 8.6)
 
 ## Files
 
